@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter, "Inter"), system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .font-nunito {
+  font-family: var(--font-nunito, "Nunito"), system-ui, -apple-system, sans-serif !important;
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s ease-out;
+}
+
+/* Print styles for reports */
+@media print {
+  body {
+    background: white !important;
+    font-size: 11px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .print\:px-0 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .print\:py-0 {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .print\:max-w-none {
+    max-width: none !important;
+  }
+  .print\:bg-white {
+    background: white !important;
+  }
+  .print\:border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+  section {
+    break-inside: avoid;
+  }
+  table {
+    break-inside: auto;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  @page {
+    margin: 0.75in;
+    size: letter;
+  }
+}
