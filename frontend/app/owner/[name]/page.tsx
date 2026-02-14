@@ -76,6 +76,7 @@ function OwnerPage() {
   const searchParams = useSearchParams();
   const ownerName = decodeURIComponent(params.name as string);
   const mode = searchParams.get("mode") || "";
+  const fromBin = searchParams.get("from") || "";
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -170,6 +171,7 @@ function OwnerPage() {
       <header className="bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:py-4">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
           <Link href="/" className="text-blue-600 hover:text-blue-800 font-bold text-lg shrink-0 font-nunito">Wocket</Link>
+          {fromBin && <Link href={`/building/${fromBin}`} className="text-sm text-gray-500 hover:text-blue-600 transition-colors">← Back to building</Link>}
           <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">{ownerName}</h1>
           <span className="text-sm text-gray-400 dark:text-gray-500 shrink-0">Owner Portfolio</span>
         </div>

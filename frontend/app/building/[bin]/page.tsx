@@ -370,7 +370,7 @@ function BuildingPage() {
               <div><span className="text-gray-500 dark:text-gray-400">Block / Lot</span><div className="font-medium">{b.block || "—"} / {b.lot || "—"}</div></div>
               <div><span className="text-gray-500 dark:text-gray-400">Borough</span><div className="font-medium">{b.borough}</div></div>
               <div><span className="text-gray-500 dark:text-gray-400">ZIP</span><div className="font-medium">{b.zip || "—"}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">Owner</span><div className="font-medium">{b.owner_name ? <Link href={`/owner/${encodeURIComponent(b.owner_name)}`} className="text-blue-600 hover:text-blue-800 hover:underline">{b.owner_name}</Link> : "—"}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">Owner</span><div className="font-medium">{b.owner_name ? <Link href={`/owner/${encodeURIComponent(b.owner_name)}?from=${bin}`} className="text-blue-600 hover:text-blue-800 hover:underline">{b.owner_name}</Link> : "—"}</div></div>
             </div>
           </div>
 
@@ -1066,7 +1066,7 @@ function BuildingPage() {
           <div className="mt-4 text-sm space-y-4">
             <div>
               <span className="text-gray-500 dark:text-gray-400">Registered Owner (HPD)</span>
-              <div className="font-medium">{b.owner_name ? <Link href={`/owner/${encodeURIComponent(b.owner_name)}`} className="text-blue-600 hover:text-blue-800 hover:underline">{b.owner_name}</Link> : "—"}</div>
+              <div className="font-medium">{b.owner_name ? <Link href={`/owner/${encodeURIComponent(b.owner_name)}?from=${bin}`} className="text-blue-600 hover:text-blue-800 hover:underline">{b.owner_name}</Link> : "—"}</div>
             </div>
             {(data.contacts || []).length > 0 && (
               <div>
@@ -1075,7 +1075,7 @@ function BuildingPage() {
                   {(data.contacts || []).map((c: any, i: number) => {
                     const name = [c.firstname, c.lastname].filter(Boolean).join(' ');
                     const fullName = name || c.corporationname || '—';
-                    const personLink = name ? `/owner/${encodeURIComponent(name)}?mode=contact` : null;
+                    const personLink = name ? `/owner/${encodeURIComponent(name)}?mode=contact&from=${bin}` : null;
                     const roleLabels: Record<string, string> = {
                       CorporateOwner: 'Corporate Owner',
                       IndividualOwner: 'Individual Owner',
