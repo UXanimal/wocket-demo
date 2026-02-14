@@ -219,8 +219,6 @@ function daysColor(days: number | null) {
 }
 
 function rowHighlight(v: any) {
-  if (v.is_unit_match) return "bg-blue-200 border-l-4 border-l-blue-600";
-  if (v.is_floor_match) return "bg-blue-100 border-l-4 border-l-blue-400";
   return "";
 }
 
@@ -618,7 +616,11 @@ function BuildingPage() {
                       <td className="py-2 pr-2 text-xs">{formatDate(v.inspectiondate)}</td>
                       <td className={`py-2 pr-2 text-xs ${daysColor(days)}`}>{formatDays(days)}</td>
                       <td className="py-2 pr-2 text-xs">{v.currentstatus}</td>
-                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate">{v.novdescription}</td>
+                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate relative">
+                        <span className="truncate block pr-14">{v.novdescription}</span>
+                        {v.is_unit_match && <span className="absolute right-1 top-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Apt {v.apartment || apt}</span>}
+                        {v.is_floor_match && !v.is_unit_match && <span className="absolute right-1 top-1/2 -translate-y-1/2 bg-blue-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Floor</span>}
+                      </td>
                     </tr>
                     );
                   })}
@@ -683,7 +685,10 @@ function BuildingPage() {
                       <td className="py-2 pr-2 text-xs">{v.severity || "—"}</td>
                       <td className="py-2 pr-2 text-xs">{formatDate(v.issue_date)}</td>
                       <td className="py-2 pr-2 text-xs">{v.ecb_violation_status}</td>
-                      <td className="py-2 pr-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate">{v.violation_description}</td>
+                      <td className="py-2 pr-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate relative">
+                        <span className="truncate block pr-14">{v.violation_description}</span>
+                        {v.is_unit_match && <span className="absolute right-1 top-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Apt {apt}</span>}
+                      </td>
                       <td className="py-2 text-xs">{fmt$(v.penality_imposed)}</td>
                     </tr>
                   ))}
