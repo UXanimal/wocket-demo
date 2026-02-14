@@ -257,7 +257,7 @@ function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-black" style={{ colorScheme: 'light' }}>
       <style dangerouslySetInnerHTML={{ __html: legalStyles }} />
 
       {/* Screen-only controls */}
