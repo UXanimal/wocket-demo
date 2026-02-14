@@ -206,10 +206,21 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
             </>
           );
 
+          const isAnchor = t.href?.includes('#');
           return t.href ? (
+            isAnchor ? (
+              <a key={i} href={t.href} onClick={(e) => {
+                const hash = t.href!.split('#')[1];
+                const el = document.getElementById(hash);
+                if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+              }} className={`rounded-lg px-3 py-2.5 ${bgClasses} hover:brightness-90 dark:hover:brightness-125 transition-all cursor-pointer block`}>
+                {content}
+              </a>
+            ) : (
             <Link key={i} href={t.href} className={`rounded-lg px-3 py-2.5 ${bgClasses} hover:brightness-90 dark:hover:brightness-125 transition-all cursor-pointer block`}>
               {content}
             </Link>
+            )
           ) : (
             <div key={i} className={`rounded-lg px-3 py-2.5 ${bgClasses}`}>
               {content}
