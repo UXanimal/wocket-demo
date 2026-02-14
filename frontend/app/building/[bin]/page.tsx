@@ -306,7 +306,6 @@ function BuildingPage() {
         <div className="max-w-5xl mx-auto flex items-center gap-2 md:gap-4">
           <Link href="/" className="text-blue-600 hover:text-blue-800 font-bold text-lg sm:text-xl shrink-0 font-nunito leading-none py-2">Wocket</Link>
           <div className="flex-1 min-w-3" />
-          {fromOwner && <Link href={`/owner/${encodeURIComponent(fromOwner)}#network${networkNode ? `?selected=${encodeURIComponent(networkNode)}` : ""}`} className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0 hidden sm:block">← Back to owner</Link>}
           <div className="w-full max-w-[220px] sm:max-w-sm min-w-0"><SearchBar /></div>
         </div>
       </header>
@@ -326,6 +325,13 @@ function BuildingPage() {
       )}
 
       <main className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-3 md:space-y-4">
+        {/* Back to owner link (when navigated from network) */}
+        {fromOwner && (
+          <Link href={`/owner/${encodeURIComponent(fromOwner)}#network${networkNode ? `?selected=${encodeURIComponent(networkNode)}` : ""}`} className="text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1">
+            ← Back to {decodeURIComponent(fromOwner)}
+          </Link>
+        )}
+
         {/* Address title + grade */}
         <div className="flex flex-wrap items-center gap-3 mb-1">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">
