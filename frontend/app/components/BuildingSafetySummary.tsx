@@ -210,9 +210,17 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
           return t.href ? (
             isAnchor ? (
               <a key={i} href={t.href} onClick={(e) => {
+                e.preventDefault();
                 const hash = t.href!.split('#')[1];
+                window.history.replaceState(null, '', `#${hash}`);
                 const el = document.getElementById(hash);
-                if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                if (el) {
+                  // Click the collapsible button to open it if collapsed
+                  const btn = el.querySelector('button');
+                  const content = el.querySelector('[class*="border-t"]');
+                  if (btn && !content) btn.click();
+                  setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+                }
               }} className={`rounded-lg px-3 py-2.5 ${bgClasses} hover:brightness-90 dark:hover:brightness-125 transition-all cursor-pointer block`}>
                 {content}
               </a>

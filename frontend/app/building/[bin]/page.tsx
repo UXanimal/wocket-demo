@@ -113,10 +113,17 @@ interface BuildingData {
   detailed_permits: any[];
 }
 
-function Collapsible({ title, subtitle, children, defaultOpen = false, badge }: { title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode }) {
+function Collapsible({ title, subtitle, children, defaultOpen = false, badge, id }: { title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode; id?: string }) {
   const [open, setOpen] = useState(defaultOpen);
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (id && typeof window !== 'undefined' && window.location.hash === `#${id}`) {
+      setOpen(true);
+      setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  }, [id]);
   return (
-    <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none overflow-hidden">
+    <div ref={ref} id={id} className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none overflow-hidden">
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 md:px-6 py-3 md:py-4 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117] transition-colors text-left">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-gray-400 dark:text-gray-500 text-sm">{open ? "▼" : "▶"}</span>
@@ -573,9 +580,7 @@ function BuildingPage() {
           const activeSafety = safety.filter((v: any) => v.violation_status === 'Active');
           if (totalSafety === 0) return null;
           return (
-          <>
-          <div id="safety-violations" />
-          <Collapsible title="DOB Safety Violations" subtitle="Elevator, boiler, façade, and other safety device violations issued by DOB" badge={
+          <Collapsible id="safety-violations" title="DOB Safety Violations" subtitle="Elevator, boiler, façade, and other safety device violations issued by DOB" badge={
             <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">{totalSafety}{activeSafety.length > 0 ? ` (${activeSafety.length} active)` : ''}</span>
           }>
             <div className="mt-4">
@@ -621,7 +626,6 @@ function BuildingPage() {
               </div>
             </div>
           </Collapsible>
-          </>
           );
         })()}
 
@@ -812,9 +816,8 @@ function BuildingPage() {
           const closedLit = litigations.filter((l: any) => l.casestatus !== 'OPEN');
           if (litigations.length === 0) return null;
           return (
-          <>
-          <div id="litigations" />
           <Collapsible
+            id="litigations"
             title="HPD Litigations"
             subtitle="Lawsuits brought by NYC against the building owner for failing to fix violations"
             defaultOpen={openLit.length > 0}
@@ -880,7 +883,6 @@ function BuildingPage() {
               <strong>HPD Litigations</strong> are lawsuits brought by the NYC Department of Housing Preservation and Development against building owners for failing to correct violations. Under NYC Admin Code § 27-2115, HPD can sue landlords who ignore Class C violations. A history of repeated litigation indicates a pattern of neglect that tenants can cite in Housing Court proceedings.
             </LegalNote>
           </Collapsible>
-          </>
           );
         })()}
 
