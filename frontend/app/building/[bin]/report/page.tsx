@@ -511,19 +511,25 @@ function ReportPage() {
                   <th className="pb-1 pr-2 font-semibold">Date</th>
                   <th className="pb-1 pr-2 font-semibold">Device</th>
                   <th className="pb-1 pr-2 font-semibold">Status</th>
+                  <th className="pb-1 pr-2 font-semibold">Days Open</th>
                   <th className="pb-1 font-semibold">Description</th>
                 </tr>
               </thead>
               <tbody>
-                {safetyViolations.map((v: any, i: number) => (
+                {safetyViolations.map((v: any, i: number) => {
+                  const isOpen = v.violation_status && !v.violation_status.toLowerCase().includes("resolve") && !v.violation_status.toLowerCase().includes("closed") && !v.violation_status.toLowerCase().includes("dismissed");
+                  const daysOpen = v.violation_issue_date ? Math.floor((Date.now() - new Date(v.violation_issue_date).getTime()) / 86400000) : null;
+                  return (
                   <tr key={i} className="border-b border-gray-100">
                     <td className="py-1 pr-2">{v.violation_number}</td>
                     <td className="py-1 pr-2">{fmtDate(v.violation_issue_date)}</td>
                     <td className="py-1 pr-2">{v.device_type || "—"}</td>
                     <td className="py-1 pr-2">{v.violation_status}</td>
+                    <td className="py-1 pr-2" style={{ color: isOpen && daysOpen && daysOpen > 90 ? "#dc2626" : isOpen ? "#d97706" : "#6b7280" }}>{daysOpen != null ? (isOpen ? `${daysOpen.toLocaleString()}d` : `${daysOpen.toLocaleString()}d ✓`) : "—"}</td>
                     <td className="py-1">{v.violation_remarks || v.violation_type || "—"}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — Safety Violations</div>
