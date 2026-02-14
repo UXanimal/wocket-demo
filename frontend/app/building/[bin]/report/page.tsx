@@ -439,7 +439,7 @@ function ReportPage() {
                   <th className="pb-1 pr-2 font-semibold">Class</th>
                   <th className="pb-1 pr-2 font-semibold">Apt</th>
                   <th className="pb-1 pr-2 font-semibold">Date</th>
-                  <th className="pb-1 pr-2 font-semibold">Open</th>
+                  <th className="pb-1 pr-2 font-semibold">Days Open</th>
                   <th className="pb-1 pr-2 font-semibold">Status</th>
                   <th className="pb-1 font-semibold">Description</th>
                 </tr>
@@ -447,13 +447,14 @@ function ReportPage() {
               <tbody>
                 {hpdViolations.map((v: any, i: number) => {
                   const days = v.violationstatus === "Open" ? daysOpen(v.inspectiondate) : null;
+                  const daysColor = days ? (days > 365 ? "color: #dc2626; font-weight: 600" : days > 90 ? "color: #ea580c; font-weight: 600" : "") : "";
                   return (
                     <tr key={i} className="border-b border-gray-100">
                       <td className="py-1 pr-2">{v.violationid}</td>
                       <td className="py-1 pr-2 font-semibold">{v.class}</td>
                       <td className="py-1 pr-2">{v.apartment || "—"}</td>
                       <td className="py-1 pr-2">{fmtDate(v.inspectiondate)}</td>
-                      <td className="py-1 pr-2">{days ? fmtDays(days) : "—"}</td>
+                      <td className="py-1 pr-2" style={daysColor ? { color: days && days > 365 ? "#dc2626" : "#ea580c", fontWeight: 600 } : {}}>{days ? fmtDays(days) : "—"}</td>
                       <td className="py-1 pr-2">{v.violationstatus}</td>
                       <td className="py-1">{v.novdescription}</td>
                     </tr>
