@@ -423,11 +423,11 @@ function BuildingPage() {
                 ? <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium">TCO</span>
                 : b.co_status === "Final"
                   ? <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">Final C of O</span>
-                  : <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full font-medium">{b.co_status || "Unknown"}</span>
+                  : <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full font-medium">{b.co_status || "No record on file"}</span>
           }
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-            <div><span className="text-gray-500 dark:text-gray-400">C of O Status</span><div className={`font-medium ${b.tco_expired ? "text-red-600" : "text-green-600"}`}>{b.co_status || "—"}</div></div>
+            <div><span className="text-gray-500 dark:text-gray-400">C of O Status</span><div className={`font-medium ${b.tco_expired ? "text-red-600" : b.co_status ? "text-green-600" : "text-gray-500 dark:text-gray-400"}`}>{b.co_status || "No record on file"}</div></div>
             {b.co_status === "TCO" && <div><span className="text-gray-500 dark:text-gray-400">Latest TCO Date</span><div className="font-medium">{formatDate(b.latest_tco_date)}</div></div>}
             {b.co_status === "TCO" && <div><span className="text-gray-500 dark:text-gray-400">TCO Expired</span><div className={`font-medium ${b.tco_expired ? "text-red-600" : ""}`}>{b.tco_expired ? "Yes" : "No"}</div></div>}
             <div><span className="text-gray-500 dark:text-gray-400">Unsigned A1/NB Jobs</span><div className={`font-medium ${unsignedJobs.length > 0 ? "text-orange-600" : ""}`}>{unsignedJobs.length}</div></div>

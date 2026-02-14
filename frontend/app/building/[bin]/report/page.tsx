@@ -417,7 +417,7 @@ function ReportPage() {
               Certificate of Occupancy
             </h2>
             <div style={{ lineHeight: "2" }}>
-              <div><span style={{ fontWeight: 600 }}>Status:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.co_status || "Unknown"}</span></div>
+              <div><span style={{ fontWeight: 600 }}>Status:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.co_status || "No record on file"}</span></div>
               {b.latest_tco_date && <div><span style={{ fontWeight: 600 }}>Latest TCO Date:</span> {fmtDate(b.latest_tco_date)}</div>}
               {b.co_status === "TCO" && <div><span style={{ fontWeight: 600 }}>TCO Expired:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.tco_expired ? "YES" : "No"}</span></div>}
               {(data.unsigned_jobs || []).length > 0 && (
