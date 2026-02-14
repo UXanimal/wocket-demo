@@ -449,7 +449,7 @@ function BuildingPage() {
               })()}
               {/* Pest */}
               <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
-                <span className="text-lg">🐛</span>
+                <span className="text-lg">🪳</span>
                 <div><div className="text-xs text-gray-500 dark:text-gray-400">Pest History</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{keywordCount(openViolations, ["roach", "mice", "rat", "pest", "vermin", "bed bug"])} violations</div></div>
               </div>
               {/* Lead */}
