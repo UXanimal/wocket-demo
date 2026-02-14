@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito", display: "swap" });
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${nunito.variable} ${inter.variable}`}>
-      <body className="min-h-screen font-inter dark:bg-[#0f1117] dark:text-gray-100">{children}<Analytics /></body>
+      <body className="min-h-screen font-inter dark:bg-[#0f1117] dark:text-gray-100">{children}<Analytics /><SpeedInsights /></body>
     </html>
   );
 }
