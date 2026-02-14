@@ -7,7 +7,6 @@ interface BuildingSafetySummaryProps {
 export default function BuildingSafetySummary({ data }: BuildingSafetySummaryProps) {
   const b = data.building;
 
-  // Compute all flags
   const tcoExpired = b.tco_expired || b.co_status === "TCO";
   const tcoDate = b.latest_tco_date ? new Date(b.latest_tco_date) : null;
   const tcoYearsOverdue = tcoDate
@@ -16,7 +15,6 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
 
   const openClassC = b.open_class_c || 0;
   const openClassB = (data.open_violations || []).filter((v: any) => v.class === "B").length;
-  const openClassA = (data.open_violations || []).filter((v: any) => v.class === "A").length;
 
   const activeSafety = (data.safety_violations || []).filter((v: any) => {
     const s = (v.violation_status || "").toLowerCase();
@@ -37,40 +35,35 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
   const unsignedJobs = b.unsigned_jobs || 0;
   const totalComplaints = data.total_complaints || 0;
 
-  // Determine severity
   const hasCritical = tcoExpired || openClassC > 0 || activeSafety > 0 || vacateStopWork > 0;
   const hasConcerning = openClassB > 0 || ecbPenalties > 0 || activeLitigation > 0 || unsignedJobs > 0;
-  const hasAnything = hasCritical || hasConcerning || totalComplaints > 50 || b.score_grade === "F";
+  const hasAnything = hasCritical || hasConcerning || totalComplaints > 50;
 
   if (!hasAnything) {
     return (
-      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-5 py-4 mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">✅</span>
-          <span className="text-sm font-medium text-green-800 dark:text-green-200">No critical issues found in city records.</span>
-        </div>
+      <div className="mt-6 mb-6 flex items-center gap-2">
+        <span className="text-lg">✅</span>
+        <span className="text-sm font-medium text-green-700 dark:text-green-300">No critical issues found in city records.</span>
       </div>
     );
   }
 
-  const borderColor = hasCritical ? "border-red-500" : hasConcerning ? "border-amber-500" : "border-blue-500";
-  const headerBg = hasCritical ? "bg-red-50 dark:bg-red-900/20" : hasConcerning ? "bg-amber-50 dark:bg-amber-900/20" : "bg-blue-50 dark:bg-blue-900/20";
-  const headerText = hasCritical ? "text-red-800 dark:text-red-200" : hasConcerning ? "text-amber-800 dark:text-amber-200" : "text-blue-800 dark:text-blue-200";
+  const headerText = hasCritical ? "text-red-700 dark:text-red-300" : hasConcerning ? "text-amber-700 dark:text-amber-300" : "text-blue-700 dark:text-blue-300";
   const headerLabel = hasCritical ? "Critical Issues Found" : hasConcerning ? "Issues Found" : "Notable Conditions";
 
   return (
-    <div className={`bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 border-l-4 ${borderColor} shadow-sm dark:shadow-none overflow-hidden mb-4`}>
+    <div className="mt-6 mb-6">
       {/* Header */}
-      <div className={`${headerBg} px-5 py-3 flex items-center gap-2`}>
+      <div className="flex items-center gap-2 mb-3">
         <span className="text-base">{hasCritical ? "🚨" : hasConcerning ? "⚠️" : "ℹ️"}</span>
         <h3 className={`text-sm font-bold uppercase tracking-wide ${headerText}`}>{headerLabel}</h3>
       </div>
 
       {/* Stats grid */}
-      <div className="px-5 py-4">
+      <div>
         {/* Critical row */}
         {hasCritical && (
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {tcoExpired && (
                 <div className="bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2.5">
@@ -104,7 +97,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
 
         {/* Concerning row */}
         {hasConcerning && (
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {openClassB > 0 && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2.5">
@@ -135,20 +128,12 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
         )}
 
         {/* Context row */}
-        {(totalComplaints > 50 || b.score_grade === "F") && (
+        {totalComplaints > 50 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {totalComplaints > 50 && (
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5">
-                <div className="text-xl font-bold font-nunito text-gray-700 dark:text-gray-200">{totalComplaints.toLocaleString()}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">DOB Complaints</div>
-              </div>
-            )}
-            {b.score_grade === "F" && (
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5">
-                <div className="text-xl font-bold font-nunito text-gray-700 dark:text-gray-200">F</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Wocket Safety Score</div>
-              </div>
-            )}
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5">
+              <div className="text-xl font-bold font-nunito text-gray-700 dark:text-gray-200">{totalComplaints.toLocaleString()}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">DOB Complaints</div>
+            </div>
           </div>
         )}
       </div>
