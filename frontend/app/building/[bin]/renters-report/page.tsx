@@ -219,7 +219,7 @@ function RentersReportPage() {
             <InfoCard label="Address" value={address} />
             <InfoCard label="Borough" value={b.borough || "—"} />
             <InfoCard label="Building Type" value={b.building_class || "—"} />
-            <InfoCard label="C of O Status" value={b.co_status || "No record"} sub={b.tco_expired ? "⚠️ TCO Expired" : undefined} />
+            <InfoCard label="C of O Status" value={b.co_status || "No record"} sub={b.tco_expired ? `⚠️ TCO Expired${(data as any).first_tco_date ? ` — on TCO since ${(data as any).first_tco_date.slice(0,4)}` : ""}` : (data as any).latest_tco_date ? `Last renewed ${(data as any).latest_tco_date}` : undefined} />
             <InfoCard label="Total Units" value={b.existing_dwelling_units || "—"} />
             <InfoCard label="Owner" value={b.owner_name || "—"} />
             <InfoCard label="Grade" value={b.score_grade || "?"} />

@@ -32,9 +32,9 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
   }, [b.bin]);
 
   const tcoExpired = b.tco_expired || b.co_status === "TCO";
-  const tcoDate = b.latest_tco_date ? new Date(b.latest_tco_date) : null;
-  const tcoYearsOverdue = tcoDate
-    ? Math.floor((Date.now() - tcoDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+  const firstTcoDate = (data as any).first_tco_date ? new Date((data as any).first_tco_date) : (b.latest_tco_date ? new Date(b.latest_tco_date) : null);
+  const tcoYearsOverdue = firstTcoDate
+    ? Math.floor((Date.now() - firstTcoDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
     : null;
 
   const openClassC = b.open_class_c || 0;

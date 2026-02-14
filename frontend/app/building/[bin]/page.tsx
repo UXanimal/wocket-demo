@@ -540,8 +540,16 @@ function BuildingPage() {
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
             <div><span className="text-gray-500 dark:text-gray-400">C of O Status</span><div className={`font-medium ${b.tco_expired ? "text-red-600" : b.co_status ? "text-green-600" : "text-gray-500 dark:text-gray-400"}`}>{b.co_status || "No record on file"}</div></div>
-            {b.co_status === "TCO" && <div><span className="text-gray-500 dark:text-gray-400">Latest TCO Date</span><div className="font-medium">{formatDate(b.latest_tco_date)}</div></div>}
-            {b.co_status === "TCO" && <div><span className="text-gray-500 dark:text-gray-400">TCO Expired</span><div className={`font-medium ${b.tco_expired ? "text-red-600" : ""}`}>{b.tco_expired ? "Yes" : "No"}</div></div>}
+            {b.co_status === "TCO" && (data as any).first_tco_date && <div><span className="text-gray-500 dark:text-gray-400">First TCO Issued</span><div className="font-medium">{formatDate((data as any).first_tco_date)}</div></div>}
+            {b.co_status === "TCO" && (data as any).latest_tco_date && <div><span className="text-gray-500 dark:text-gray-400">Latest TCO Renewal</span><div className="font-medium">{formatDate((data as any).latest_tco_date)}</div></div>}
+            {b.co_status === "TCO" && (data as any).first_tco_date && (() => {
+              const first = new Date((data as any).first_tco_date);
+              const years = Math.floor((Date.now() - first.getTime()) / (365.25 * 86400000));
+              const months = Math.floor(((Date.now() - first.getTime()) / (30.44 * 86400000)) % 12);
+              return years > 0 ? (
+                <div><span className="text-gray-500 dark:text-gray-400">TCO Duration</span><div className={`font-medium ${years >= 2 ? "text-red-600" : ""}`}>{years}y {months}m</div></div>
+              ) : null;
+            })()}
             <div><span className="text-gray-500 dark:text-gray-400">Unsigned A1/NB Jobs</span><div className={`font-medium ${unsignedJobs.length > 0 ? "text-orange-600" : ""}`}>{unsignedJobs.length}</div></div>
           </div>
           {coRecords.length > 0 && (
