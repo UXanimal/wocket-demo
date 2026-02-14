@@ -616,10 +616,9 @@ function BuildingPage() {
                       <td className="py-2 pr-2 text-xs">{formatDate(v.inspectiondate)}</td>
                       <td className={`py-2 pr-2 text-xs ${daysColor(days)}`}>{formatDays(days)}</td>
                       <td className="py-2 pr-2 text-xs">{v.currentstatus}</td>
-                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate relative">
-                        <span className="truncate block pr-14">{v.novdescription}</span>
-                        {v.is_unit_match && <span className="absolute right-1 top-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Apt {v.apartment || apt}</span>}
-                        {v.is_floor_match && !v.is_unit_match && <span className="absolute right-1 top-1/2 -translate-y-1/2 bg-blue-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Floor</span>}
+                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs relative overflow-visible">
+                        <span className="block truncate">{v.novdescription}</span>
+                        {(v.is_unit_match || v.is_floor_match) && <span className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm ${v.is_unit_match ? "bg-blue-600" : "bg-blue-400"}`}>Apt {v.apartment || apt}</span>}
                       </td>
                     </tr>
                     );
