@@ -667,19 +667,22 @@ function ReportPage() {
                   <th className="pb-1 pr-2 font-semibold">Date</th>
                   <th className="pb-1 pr-2 font-semibold">Category</th>
                   <th className="pb-1 pr-2 font-semibold">Status</th>
-                  <th className="pb-1 font-semibold">Disposition</th>
+                  <th className="pb-1 font-semibold">Days Active</th>
                 </tr>
               </thead>
               <tbody>
-                {complaints.map((c: any, i: number) => (
+                {complaints.map((c: any, i: number) => {
+                  const days = c.date_entered ? Math.floor((Date.now() - new Date(c.date_entered).getTime()) / 86400000) : null;
+                  return (
                   <tr key={i} className="border-b border-gray-100">
                     <td className="py-1 pr-2">{c.complaint_number}</td>
                     <td className="py-1 pr-2">{c.date_entered}</td>
                     <td className="py-1 pr-2">{c.category_description || c.complaint_category}</td>
                     <td className="py-1 pr-2">{c.status}</td>
-                    <td className="py-1">{c.disposition_description || c.disposition_code || "—"}</td>
+                    <td className="py-1">{days != null ? fmtDays(days) : "—"}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC DOB — Complaints Received (via NYC Open Data, dataset eabe-havv)</div>
