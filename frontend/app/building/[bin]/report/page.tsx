@@ -248,7 +248,13 @@ function ReportPage() {
 
     // Apartment filter
     if (config.apartmentFilter) {
-      parts.push(`This report has been filtered to records pertaining to Apartment ${config.apartmentFilter}.`);
+      const aptUpper = config.apartmentFilter.toUpperCase();
+      const aptOpenCount = (data.open_violations || []).filter((v: any) => v.violationstatus === "Open" && (v.apartment || "").toUpperCase().includes(aptUpper)).length;
+      if (aptOpenCount > 0) {
+        parts.push(`This report has been filtered to records pertaining to Apartment ${config.apartmentFilter}, which has ${aptOpenCount} open HPD violation${aptOpenCount !== 1 ? "s" : ""} as detailed in the Apartment-Specific Issues section below.`);
+      } else {
+        parts.push(`This report has been filtered to records pertaining to Apartment ${config.apartmentFilter}.`);
+      }
     }
 
     parts.push("The complete record follows below.");
@@ -384,7 +390,7 @@ function ReportPage() {
           </div>
           <div style={{ fontSize: "11pt", lineHeight: "1.6" }}>
             <div>BIN: {b.bin || bin} &nbsp;|&nbsp; Block: {b.block} &nbsp;|&nbsp; Lot: {b.lot} &nbsp;|&nbsp; Borough: {b.borough}</div>
-            {config.apartmentFilter && <div>Apartment: {config.apartmentFilter}</div>}
+            {config.apartmentFilter && <div style={{ fontSize: "14pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: "8px", border: "2px solid #111827", display: "inline-block", padding: "4px 16px" }}>Apartment {config.apartmentFilter}</div>}
             {b.owner_name && config.includeOwnership && <div>Registered Owner (HPD): {b.owner_name}</div>}
             <div style={{ marginTop: "4px" }}>Report Generated: {generatedDate} at {generatedTime}</div>
           </div>
@@ -409,6 +415,96 @@ function ReportPage() {
             <p style={{ textIndent: "2em" }}>{data.ai_summary}</p>
           </div>
         )}
+
+        {/* Apartment-Specific Issues */}
+        {config.apartmentFilter && (() => {
+          const aptUpper = config.apartmentFilter.toUpperCase();
+          const aptHpd = hpdViolations.filter((v: any) => (v.apartment || "").toUpperCase().includes(aptUpper));
+          const aptHpdOpen = aptHpd.filter((v: any) => v.violationstatus === "Open");
+          const aptClassC = aptHpdOpen.filter((v: any) => (v.class || "").toUpperCase() === "C");
+          const aptClassB = aptHpdOpen.filter((v: any) => (v.class || "").toUpperCase() === "B");
+          const aptComplaints = complaints.filter((c: any) => (c.unit || "").toUpperCase().includes(aptUpper));
+          const aptActiveComplaints = aptComplaints.filter((c: any) => c.status === "ACTIVE");
+          const hasIssues = aptHpdOpen.length > 0 || aptActiveComplaints.length > 0;
+
+          if (!hasIssues) return null;
+
+          return (
+            <section className="mb-6 break-inside-avoid" style={{ border: "2px solid #111827", padding: "16px" }}>
+              <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>
+                Open Issues — Apartment {config.apartmentFilter}
+              </h2>
+              <p style={{ lineHeight: "2", textIndent: "2em", marginBottom: "8px" }}>
+                The following open issues are recorded specifically against Apartment {config.apartmentFilter}
+                {" "}at the subject premises:
+              </p>
+
+              {aptHpdOpen.length > 0 && (
+                <div style={{ marginBottom: "12px" }}>
+                  <h3 style={{ fontSize: "11pt", fontWeight: "bold", marginBottom: "4px" }}>
+                    HPD Violations ({aptHpdOpen.length} Open)
+                  </h3>
+                  {aptClassC.length > 0 && (
+                    <p style={{ lineHeight: "1.8", marginBottom: "4px", fontWeight: 600 }}>
+                      ⚠ {aptClassC.length} Class C (Immediately Hazardous) — required correction within 24 hours per HMC §27-2115.
+                    </p>
+                  )}
+                  {aptClassB.length > 0 && (
+                    <p style={{ lineHeight: "1.8", marginBottom: "4px" }}>
+                      {aptClassB.length} Class B (Hazardous) — required correction within 30 days per HMC §27-2115.
+                    </p>
+                  )}
+                  <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
+                    <thead>
+                      <tr className="border-b border-gray-400 text-left">
+                        <th className="pb-1 pr-2 font-semibold">Class</th>
+                        <th className="pb-1 pr-2 font-semibold">Date</th>
+                        <th className="pb-1 pr-2 font-semibold">Days Open</th>
+                        <th className="pb-1 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {aptHpdOpen.map((v: any, i: number) => (
+                        <tr key={i} className="border-b border-gray-100">
+                          <td className="py-1 pr-2 font-semibold">{v.class}</td>
+                          <td className="py-1 pr-2">{fmtDate(v.inspectiondate)}</td>
+                          <td className="py-1 pr-2">{daysOpen(v.inspectiondate) ? fmtDays(daysOpen(v.inspectiondate)!) : "—"}</td>
+                          <td className="py-1">{v.novdescription}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {aptActiveComplaints.length > 0 && (
+                <div>
+                  <h3 style={{ fontSize: "11pt", fontWeight: "bold", marginBottom: "4px" }}>
+                    DOB Complaints ({aptActiveComplaints.length} Active)
+                  </h3>
+                  <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
+                    <thead>
+                      <tr className="border-b border-gray-400 text-left">
+                        <th className="pb-1 pr-2 font-semibold">Date</th>
+                        <th className="pb-1 pr-2 font-semibold">Category</th>
+                        <th className="pb-1 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {aptActiveComplaints.map((c: any, i: number) => (
+                        <tr key={i} className="border-b border-gray-100">
+                          <td className="py-1 pr-2">{fmtDate(c.date_entered)}</td>
+                          <td className="py-1 pr-2">{c.complaint_category}</td>
+                          <td className="py-1">{c.category_description || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         {/* Certificate of Occupancy */}
         {config.includeCoo && (
