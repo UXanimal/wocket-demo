@@ -358,6 +358,119 @@ function BuildingPage() {
         {/* Building Safety Summary */}
         <BuildingSafetySummary data={data} />
 
+        {/* Renter's Profile */}
+        <Collapsible title="Renter's Profile" defaultOpen={true} badge={<span className="text-xs text-gray-500 dark:text-gray-400">Apartment Hunter Snapshot</span>}>
+          <div className="mt-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {/* Construction */}
+              {(() => {
+                const allP = [...bisJobs.map((j: any) => ({...j, source: 'BIS'})), ...detailedPermits];
+                const recent = allP.filter((j: any) => {
+                  if (j.signed_off || j.risk_tier === 'clear') return false;
+                  const desc = (j.job_description || '').toUpperCase();
+                  if (desc.includes('NO WORK')) return false;
+                  const d = j.latest_action_date || j.issued_date;
+                  if (!d) return false;
+                  return (Date.now() - new Date(d).getTime()) / 86400000 < 730;
+                });
+                const wt = [...new Set(recent.map((j: any) => j.work_type).filter(Boolean))];
+                const hasSt = wt.some(w => ['General Construction', 'Structural', 'Foundation'].includes(w));
+                const cnt = recent.length;
+                const ed = recent.map((j: any) => j.latest_action_date || j.issued_date).filter(Boolean).sort()[0];
+                const dm = ed ? Math.round((Date.now() - new Date(ed as string).getTime()) / (30 * 86400000)) : 0;
+                const ds = dm >= 24 ? `${Math.floor(dm/12)}+ years` : dm >= 1 ? `${dm} months` : 'recent';
+                let level = 'No active construction';
+                if (cnt > 10 || hasSt) level = `Heavy Construction · ${ds}`;
+                else if (cnt > 3 || wt.length > 1) level = `Moderate Construction · ${ds}`;
+                else if (cnt > 0) level = `Minor Work · ${ds}`;
+                return (
+                  <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                    <span className="text-lg">🏗️</span>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Construction</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{level}</div></div>
+                  </div>
+                );
+              })()}
+              {/* Pest */}
+              <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                <span className="text-lg">🐛</span>
+                <div><div className="text-xs text-gray-500 dark:text-gray-400">Pest History</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{keywordCount(openViolations, ["roach", "mice", "rat", "pest", "vermin", "bed bug"])} violations</div></div>
+              </div>
+              {/* Lead */}
+              {(() => {
+                const leadAll = keywordCount(openViolations, ["lead", "lead-based"]);
+                const leadO = keywordCount(openOnly, ["lead", "lead-based"]);
+                return (
+                  <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                    <span className="text-lg">🎨</span>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Lead Paint</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{leadAll} violations{leadO > 0 ? <span className="text-red-600 ml-1">({leadO} open)</span> : ""}</div></div>
+                  </div>
+                );
+              })()}
+              {/* Fire Safety */}
+              <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                <span className="text-lg">🔥</span>
+                <div><div className="text-xs text-gray-500 dark:text-gray-400">Fire Safety</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{fireSafety} open</div></div>
+              </div>
+              {/* Mold */}
+              <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                <span className="text-lg">🌫️</span>
+                <div><div className="text-xs text-gray-500 dark:text-gray-400">Mold</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{mold} open</div></div>
+              </div>
+              {/* Elevator */}
+              {(() => {
+                const elevCount = ((data as any).safety_violations || []).filter((v: any) => (v.device_type || "").toLowerCase().includes("elev")).length;
+                return (
+                  <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                    <span className="text-lg">⚡</span>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Elevator</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{elevCount} violations</div></div>
+                  </div>
+                );
+              })()}
+              {/* Complaint Resolution - placeholder, filled by PredictionCard data */}
+              <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                <span className="text-lg">📊</span>
+                <div><div className="text-xs text-gray-500 dark:text-gray-400">Complaint Resolution</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">See predictions below</div></div>
+              </div>
+              {/* Landlord */}
+              {(() => {
+                const lits = (data as any).litigations || [];
+                const openLits = lits.filter((l: any) => l.casestatus === "OPEN");
+                return (
+                  <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                    <span className="text-lg">👤</span>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Landlord</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{lits.length} litigation{lits.length !== 1 ? "s" : ""}{openLits.length > 0 ? <span className="text-red-600 ml-1">· {openLits.length} active</span> : ""}</div></div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Apartment-specific subsection */}
+            {apt && (() => {
+              const aptViols = openViolations.filter((v: any) => v.is_unit_match);
+              const aptOpen = aptViols.filter((v: any) => v.violationstatus === "Open");
+              const years = aptViols.length > 0 ? Math.max(1, Math.round((Date.now() - new Date(aptViols[aptViols.length - 1]?.inspectiondate || Date.now()).getTime()) / (365 * 86400000))) : 0;
+              return (
+                <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">Apartment {apt}</h4>
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
+                    This apartment has had <strong>{aptViols.length} violation{aptViols.length !== 1 ? "s" : ""}</strong>{years > 0 ? ` in ${years} year${years !== 1 ? "s" : ""}` : ""} ({aptOpen.length} currently open).
+                  </p>
+                </div>
+              );
+            })()}
+
+            {/* Generate Renter's Report button */}
+            <div className="mt-4">
+              <Link
+                href={`/building/${bin}/renters-report${qsStr}`}
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors"
+              >
+                📋 Generate Renter&apos;s Report
+              </Link>
+            </div>
+          </div>
+        </Collapsible>
+
         {/* AI Summary */}
         <AISummary bin={bin} existing={b.ai_summary} updatedAt={b.ai_summary_updated} />
 
