@@ -370,7 +370,7 @@ function ReportPage() {
         {/* Report Header — Legal Document Caption */}
         <div className="border-b-2 border-gray-900 pb-4 mb-6" style={{ textAlign: "center" }}>
           <h1 style={{ fontSize: "16pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
-            {address}
+            {address}, {b.borough ? b.borough.charAt(0) + b.borough.slice(1).toLowerCase() : ""}, New York
           </h1>
           <div style={{ fontSize: "14pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>
             Building Condition Report
