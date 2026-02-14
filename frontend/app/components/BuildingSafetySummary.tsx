@@ -35,107 +35,106 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
   const unsignedJobs = b.unsigned_jobs || 0;
   const totalComplaints = data.total_complaints || 0;
 
-  const hasCritical = tcoExpired || openClassC > 0 || activeSafety > 0 || vacateStopWork > 0;
-  const hasConcerning = openClassB > 0 || ecbPenalties > 0 || activeLitigation > 0 || unsignedJobs > 0;
-  const hasAnything = hasCritical || hasConcerning || totalComplaints > 50;
+  const hasAnything = tcoExpired || openClassC > 0 || activeSafety > 0 || vacateStopWork > 0 ||
+    openClassB > 0 || ecbPenalties > 0 || activeLitigation > 0 || unsignedJobs > 0 || totalComplaints > 50;
 
   if (!hasAnything) {
     return (
       <div className="mt-6 mb-6 flex items-center gap-2">
         <span className="text-lg">✅</span>
-        <span className="text-sm font-medium text-green-700 dark:text-green-300">No critical issues found in city records.</span>
+        <span className="text-sm font-medium text-green-700 dark:text-green-300">No open issues found in city records.</span>
       </div>
     );
   }
 
-  const headerText = hasCritical ? "text-red-700 dark:text-red-300" : hasConcerning ? "text-amber-700 dark:text-amber-300" : "text-blue-700 dark:text-blue-300";
-  const headerLabel = hasCritical ? "Critical Issues Found" : hasConcerning ? "Issues Found" : "Notable Conditions";
+  const tiles: { value: string; label: string; sublabel: string; color: string }[] = [];
+
+  if (tcoExpired) {
+    tiles.push({
+      value: tcoYearsOverdue ? `${tcoYearsOverdue}yr` : "Expired",
+      label: "TCO Overdue",
+      sublabel: "No valid Certificate of Occupancy",
+      color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+    });
+  }
+  if (openClassC > 0) {
+    tiles.push({
+      value: String(openClassC),
+      label: "Open Class C",
+      sublabel: "Immediately hazardous — 24hr correction",
+      color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+    });
+  }
+  if (activeSafety > 0) {
+    tiles.push({
+      value: String(activeSafety),
+      label: "DOB Safety Violations",
+      sublabel: "Elevators, boilers, fire safety",
+      color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+    });
+  }
+  if (vacateStopWork > 0) {
+    tiles.push({
+      value: String(vacateStopWork),
+      label: "Vacate / Stop Work",
+      sublabel: "Active orders on record",
+      color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+    });
+  }
+  if (openClassB > 0) {
+    tiles.push({
+      value: String(openClassB),
+      label: "Open Class B",
+      sublabel: "Hazardous — 30-day correction",
+      color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+    });
+  }
+  if (ecbPenalties > 0) {
+    tiles.push({
+      value: `$${ecbPenalties.toLocaleString()}`,
+      label: "ECB Penalties",
+      sublabel: "Environmental Control Board fines",
+      color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+    });
+  }
+  if (activeLitigation > 0) {
+    tiles.push({
+      value: String(activeLitigation),
+      label: "HPD Litigations",
+      sublabel: "Active cases against owner",
+      color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+    });
+  }
+  if (unsignedJobs > 0) {
+    tiles.push({
+      value: String(unsignedJobs),
+      label: "Unsigned Alt. Jobs",
+      sublabel: "No final sign-off from DOB",
+      color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+    });
+  }
+  if (totalComplaints > 50) {
+    tiles.push({
+      value: totalComplaints.toLocaleString(),
+      label: "DOB Complaints",
+      sublabel: "Total complaints on record",
+      color: "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200",
+    });
+  }
 
   return (
     <div className="mt-6 mb-6">
-      {/* Header */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-base">{hasCritical ? "🚨" : hasConcerning ? "⚠️" : "ℹ️"}</span>
-        <h3 className={`text-sm font-bold uppercase tracking-wide ${headerText}`}>{headerLabel}</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">At a Glance</h3>
       </div>
-
-      {/* Stats grid */}
-      <div>
-        {/* Critical row */}
-        {hasCritical && (
-          <div className="mb-3">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {tcoExpired && (
-                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2.5">
-                  <div className="text-xl font-bold font-nunito text-red-600 dark:text-red-400">
-                    {tcoYearsOverdue ? `${tcoYearsOverdue}yr` : "Expired"}
-                  </div>
-                  <div className="text-xs text-red-700 dark:text-red-300 mt-0.5">TCO Overdue</div>
-                </div>
-              )}
-              {openClassC > 0 && (
-                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2.5">
-                  <div className="text-xl font-bold font-nunito text-red-600 dark:text-red-400">{openClassC}</div>
-                  <div className="text-xs text-red-700 dark:text-red-300 mt-0.5">Open Class C</div>
-                </div>
-              )}
-              {activeSafety > 0 && (
-                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2.5">
-                  <div className="text-xl font-bold font-nunito text-red-600 dark:text-red-400">{activeSafety}</div>
-                  <div className="text-xs text-red-700 dark:text-red-300 mt-0.5">DOB Safety Violations</div>
-                </div>
-              )}
-              {vacateStopWork > 0 && (
-                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2.5">
-                  <div className="text-xl font-bold font-nunito text-red-600 dark:text-red-400">{vacateStopWork}</div>
-                  <div className="text-xs text-red-700 dark:text-red-300 mt-0.5">Vacate / Stop Work</div>
-                </div>
-              )}
-            </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {tiles.map((t, i) => (
+          <div key={i} className={`rounded-lg px-3 py-2.5 ${t.color.split(" ").filter(c => c.startsWith("bg-") || c.startsWith("dark:bg-")).join(" ")}`}>
+            <div className={`text-xl font-bold font-nunito ${t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ")}`}>{t.value}</div>
+            <div className={`text-xs font-medium mt-0.5 ${t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ")}`}>{t.label}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t.sublabel}</div>
           </div>
-        )}
-
-        {/* Concerning row */}
-        {hasConcerning && (
-          <div className="mb-3">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {openClassB > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2.5">
-                  <div className="text-xl font-bold font-nunito text-amber-600 dark:text-amber-400">{openClassB}</div>
-                  <div className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Open Class B</div>
-                </div>
-              )}
-              {ecbPenalties > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2.5">
-                  <div className="text-xl font-bold font-nunito text-amber-600 dark:text-amber-400">${ecbPenalties.toLocaleString()}</div>
-                  <div className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">ECB Penalties</div>
-                </div>
-              )}
-              {activeLitigation > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2.5">
-                  <div className="text-xl font-bold font-nunito text-amber-600 dark:text-amber-400">{activeLitigation}</div>
-                  <div className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Active HPD Litigations</div>
-                </div>
-              )}
-              {unsignedJobs > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2.5">
-                  <div className="text-xl font-bold font-nunito text-amber-600 dark:text-amber-400">{unsignedJobs}</div>
-                  <div className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Unsigned Alt. Jobs</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Context row */}
-        {totalComplaints > 50 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5">
-              <div className="text-xl font-bold font-nunito text-gray-700 dark:text-gray-200">{totalComplaints.toLocaleString()}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">DOB Complaints</div>
-            </div>
-          </div>
-        )}
+        ))}
       </div>
     </div>
   );
