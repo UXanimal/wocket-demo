@@ -13,9 +13,9 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
-        <h1 className="text-xl font-bold"><span className="font-nunito text-blue-600">Wocket</span> <span className="text-gray-400 font-normal text-sm">NYC Public Apartment Data</span></h1>
-        <a href="#" className="text-sm text-gray-500 hover:text-gray-700">Legal</a>
+      <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700">
+        <h1 className="text-xl font-bold"><span className="font-nunito text-blue-600">Wocket</span> <span className="text-gray-400 dark:text-gray-500 font-normal text-sm">NYC Public Apartment Data</span></h1>
+        <a href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200">Legal</a>
       </header>
 
       {/* Hero */}
@@ -32,10 +32,10 @@ export default function Home() {
       {/* Cards */}
       <section className="max-w-5xl mx-auto px-6 py-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((c) => (
-          <div key={c.title} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div key={c.title} className="bg-white dark:bg-[#1a1b2e] rounded-xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
             <div className="text-2xl mb-3">{c.icon}</div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-900">{c.title}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">{c.desc}</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">{c.title}</h3>
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">{c.desc}</p>
           </div>
         ))}
       </section>

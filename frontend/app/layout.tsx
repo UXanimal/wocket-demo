@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${nunito.variable} ${inter.variable}`}>
-      <body className="min-h-screen font-inter">{children}<Analytics /></body>
+      <body className="min-h-screen font-inter dark:bg-[#0f1117] dark:text-gray-100">{children}<Analytics /></body>
     </html>
   );
 }

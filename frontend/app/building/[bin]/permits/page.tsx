@@ -41,7 +41,7 @@ const PERMITS_GLOSSARY: GlossarySection[] = [
       { code: "🟠 Expired", label: "Permit expired but work type is lower risk", color: "text-orange-400" },
       { code: "🟡 Active", label: "Permit still active — work may be in progress", color: "text-yellow-400" },
       { code: "🟢 Signed Off", label: "Work completed and inspected/signed off by DOB", color: "text-green-400" },
-      { code: "⚪ Unknown", label: "Status could not be determined", color: "text-gray-400" },
+      { code: "⚪ Unknown", label: "Status could not be determined", color: "text-gray-400 dark:text-gray-500" },
     ],
   },
   {
@@ -111,7 +111,7 @@ function PermitsPageInner() {
             const dColor = days && days > 365 ? "text-red-600 font-medium" : days && days > 90 ? "text-orange-500 font-medium" : "";
             if (r.no_final_inspection) return <span className={dColor || "text-red-600 font-medium"}>⚠ No final{dStr}</span>;
             if (r.risk_tier === 'active') return <span className="text-yellow-600">Pending{dStr}</span>;
-            return <span className="text-gray-400">—</span>;
+            return <span className="text-gray-400 dark:text-gray-500">—</span>;
           }},
         ]}
         filters={[
@@ -135,7 +135,7 @@ function PermitsPageInner() {
         onRowClick={handleRowClick}
         selectedIndex={selectedIdx}
         glossary={PERMITS_GLOSSARY}
-        rowHighlight={(r) => r.is_unit_match ? "bg-blue-50 border-l-4 border-l-blue-500" : r.no_final_inspection ? "bg-red-50/30" : ""}
+        rowHighlight={(r) => r.is_unit_match ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500" : r.no_final_inspection ? "bg-red-50/30" : ""}
       />
       <DetailDrawer
         open={!!selected}
@@ -171,5 +171,5 @@ function PermitsPageInner() {
 }
 
 export default function PermitsPage() {
-  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400">Loading...</div></div>}><PermitsPageInner /></Suspense>;
+  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400 dark:text-gray-500">Loading...</div></div>}><PermitsPageInner /></Suspense>;
 }

@@ -107,21 +107,21 @@ export default function ListPage({
   const backQs = backParams.toString() ? `?${backParams.toString()}` : "";
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0f1117]">
+      <header className="bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:py-4">
         <div className="max-w-6xl mx-auto">
           <Link href={`/building/${bin}${backQs}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
             ← Back to report card
           </Link>
-          <h1 className="text-xl md:text-2xl font-bold font-nunito text-gray-900 mt-1">
+          <h1 className="text-xl md:text-2xl font-bold font-nunito text-gray-900 dark:text-gray-100 mt-1">
             {title}
           </h1>
-          {address && <p className="text-sm text-gray-500">{address}</p>}
+          {address && <p className="text-sm text-gray-500 dark:text-gray-400">{address}</p>}
         </div>
       </header>
 
       {apt && (
-        <div className="bg-blue-50 border-b border-blue-200">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
           <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-3">
             <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded">Apt {apt}</span>
             <span className="text-blue-700 text-xs">Matching rows highlighted</span>
@@ -136,14 +136,14 @@ export default function ListPage({
           placeholder={searchPlaceholder}
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(1); }}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
         />
 
         {/* Filter pills + glossary */}
         <div className="flex flex-wrap items-center gap-2">
           {filters.map(f => (
             <div key={f.key} className="flex items-center gap-1">
-              <span className="text-xs text-gray-500 mr-1">{f.label}:</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">{f.label}:</span>
               {f.options.map(opt => (
                 <button
                   key={opt.value}
@@ -151,7 +151,7 @@ export default function ListPage({
                   className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                     activeFilters[f.key] === opt.value
                       ? "bg-blue-600 text-white"
-                      : opt.color || "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : opt.color || "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200"
                   }`}
                 >
                   {opt.label}
@@ -163,24 +163,24 @@ export default function ListPage({
 
         {/* Results count + glossary */}
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">{total} result{total !== 1 ? "s" : ""}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">{total} result{total !== 1 ? "s" : ""}</div>
           {glossary && glossary.length > 0 && <CodeGlossary sections={glossary} />}
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+        <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-gray-400">Loading...</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500">Loading...</div>
           ) : rows.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">No results found</div>
+            <div className="p-8 text-center text-gray-400 dark:text-gray-500">No results found</div>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-gray-500 border-b bg-gray-50">
+                <tr className="text-left text-gray-500 dark:text-gray-400 border-b bg-gray-50 dark:bg-[#0f1117]">
                   {columns.map(col => (
                     <th
                       key={col.key}
-                      className={`px-3 py-2.5 text-xs font-medium uppercase tracking-wide ${col.sortable !== false ? "cursor-pointer hover:text-gray-700 select-none" : ""} ${col.className || ""}`}
+                      className={`px-3 py-2.5 text-xs font-medium uppercase tracking-wide ${col.sortable !== false ? "cursor-pointer hover:text-gray-700 dark:text-gray-200 select-none" : ""} ${col.className || ""}`}
                       onClick={() => col.sortable !== false && toggleSort(col.key)}
                     >
                       <span className="flex items-center gap-1">
@@ -198,7 +198,7 @@ export default function ListPage({
                   <tr
                     key={i}
                     onClick={() => onRowClick(row, i, rows)}
-                    className={`border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors ${
+                    className={`border-b border-gray-50 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117] transition-colors ${
                       selectedIndex === i ? "bg-blue-100 ring-1 ring-blue-300" : ""
                     } ${rowHighlight ? rowHighlight(row) : ""}`}
                   >
@@ -220,15 +220,15 @@ export default function ListPage({
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="px-3 py-1.5 text-sm font-medium rounded-lg bg-white border border-gray-300 disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg bg-white dark:bg-[#1a1b2e] border border-gray-300 dark:border-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117]"
             >
               ← Prev
             </button>
-            <span className="text-sm text-gray-500">Page {page} of {totalPages}</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Page {page} of {totalPages}</span>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="px-3 py-1.5 text-sm font-medium rounded-lg bg-white border border-gray-300 disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg bg-white dark:bg-[#1a1b2e] border border-gray-300 dark:border-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117]"
             >
               Next →
             </button>

@@ -58,9 +58,9 @@ const COMPLAINTS_GLOSSARY: GlossarySection[] = [
       { code: "A5", label: "Vacate Order", color: "text-red-600" },
       { code: "A6", label: "Unsafe Building", color: "text-red-600" },
       { code: "A8", label: "Referred", color: "text-yellow-400" },
-      { code: "A9", label: "No Action Necessary", color: "text-gray-400" },
-      { code: "I1", label: "No Access", color: "text-gray-400" },
-      { code: "I2", label: "Unable to Locate", color: "text-gray-400" },
+      { code: "A9", label: "No Action Necessary", color: "text-gray-400 dark:text-gray-500" },
+      { code: "I1", label: "No Access", color: "text-gray-400 dark:text-gray-500" },
+      { code: "I2", label: "Unable to Locate", color: "text-gray-400 dark:text-gray-500" },
     ],
   },
 ];
@@ -89,13 +89,13 @@ function ComplaintsPageInner() {
         columns={[
           { key: "date_entered", label: "Date Filed" },
           { key: "category_description", label: "Category", render: (r) => (
-            <span><span className="font-mono text-gray-400 mr-1">{r.complaint_category}</span>{r.category_description || ""}</span>
+            <span><span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.complaint_category}</span>{r.category_description || ""}</span>
           )},
           { key: "status", label: "Status", render: (r) => (
-            <span className={r.status === "ACTIVE" ? "text-red-600 font-medium" : "text-gray-500"}>{r.status}</span>
+            <span className={r.status === "ACTIVE" ? "text-red-600 font-medium" : "text-gray-500 dark:text-gray-400"}>{r.status}</span>
           )},
           { key: "disposition_description", label: "Disposition", render: (r) => (
-            <span>{r.disposition_code ? <span className="font-mono text-gray-400 mr-1">{r.disposition_code}</span> : null}{r.disposition_description || r.disposition_code || "—"}</span>
+            <span>{r.disposition_code ? <span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.disposition_code}</span> : null}{r.disposition_description || r.disposition_code || "—"}</span>
           )},
           { key: "inspection_date", label: "Inspected" },
         ]}
@@ -140,5 +140,5 @@ function ComplaintsPageInner() {
 }
 
 export default function ComplaintsPage() {
-  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400">Loading...</div></div>}><ComplaintsPageInner /></Suspense>;
+  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400 dark:text-gray-500">Loading...</div></div>}><ComplaintsPageInner /></Suspense>;
 }

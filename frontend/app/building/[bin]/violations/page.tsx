@@ -9,7 +9,7 @@ const HPD_GLOSSARY: GlossarySection[] = [
   {
     title: "Violation Classes",
     entries: [
-      { code: "A", label: "Non-hazardous — minor condition (e.g., peeling paint in small area, missing outlet cover)", color: "bg-gray-100 text-gray-700" },
+      { code: "A", label: "Non-hazardous — minor condition (e.g., peeling paint in small area, missing outlet cover)", color: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200" },
       { code: "B", label: "Hazardous — condition endangering comfort/safety (e.g., leaky faucet, inadequate lighting)", color: "bg-orange-100 text-orange-700" },
       { code: "C", label: "Immediately hazardous — serious threat to life/safety (e.g., lead paint, no heat/hot water, fire escape blocked, vermin)", color: "bg-red-100 text-red-700" },
     ],
@@ -18,7 +18,7 @@ const HPD_GLOSSARY: GlossarySection[] = [
     title: "Violation Status",
     entries: [
       { code: "Open", label: "Violation has not been corrected or certified as corrected", color: "text-red-500" },
-      { code: "Close", label: "Violation has been corrected and certified by HPD inspection", color: "text-gray-400" },
+      { code: "Close", label: "Violation has been corrected and certified by HPD inspection", color: "text-gray-400 dark:text-gray-500" },
     ],
   },
   {
@@ -64,21 +64,21 @@ function ViolationsPageInner() {
         columns={[
           { key: "class", label: "Class", render: (r) => (
             <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-              r.class === "C" ? "bg-red-100 text-red-700" : r.class === "B" ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-700"
+              r.class === "C" ? "bg-red-100 text-red-700" : r.class === "B" ? "bg-orange-100 text-orange-700" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
             }`}>{r.class}</span>
           )},
           { key: "apartment", label: "Apt" },
           { key: "inspectiondate", label: "Date", render: (r) => formatDate(r.inspectiondate) },
           { key: "days_open", label: "Open", render: (r) => {
-            if (r.violationstatus !== "Open" || !r.inspectiondate) return <span className="text-gray-400">—</span>;
+            if (r.violationstatus !== "Open" || !r.inspectiondate) return <span className="text-gray-400 dark:text-gray-500">—</span>;
             const days = Math.floor((Date.now() - new Date(r.inspectiondate).getTime()) / 86400000);
-            if (days <= 0) return <span className="text-gray-400">—</span>;
+            if (days <= 0) return <span className="text-gray-400 dark:text-gray-500">—</span>;
             const text = days > 365 ? `${Math.floor(days/365)}y ${days%365}d` : `${days}d`;
-            const color = days > 365 ? "text-red-600 font-medium" : days > 90 ? "text-orange-500" : "text-gray-600";
+            const color = days > 365 ? "text-red-600 font-medium" : days > 90 ? "text-orange-500" : "text-gray-600 dark:text-gray-300";
             return <span className={color}>{text}</span>;
           }},
           { key: "violationstatus", label: "Status", render: (r) => (
-            <span className={r.violationstatus === "Open" ? "text-red-600 font-medium" : "text-gray-500"}>{r.violationstatus}</span>
+            <span className={r.violationstatus === "Open" ? "text-red-600 font-medium" : "text-gray-500 dark:text-gray-400"}>{r.violationstatus}</span>
           )},
           { key: "currentstatus", label: "Current Status" },
           { key: "novdescription", label: "Description", className: "max-w-xs truncate" },
@@ -87,7 +87,7 @@ function ViolationsPageInner() {
           { key: "class", label: "Class", options: [
             { value: "C", label: "C — Immediately Hazardous", color: "bg-red-100 text-red-700" },
             { value: "B", label: "B — Hazardous", color: "bg-orange-100 text-orange-700" },
-            { value: "A", label: "A — Non-Hazardous", color: "bg-gray-100 text-gray-700" },
+            { value: "A", label: "A — Non-Hazardous", color: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200" },
           ]},
           { key: "status", label: "Status", options: [
             { value: "Open", label: "Open", color: "bg-red-100 text-red-700" },
@@ -97,7 +97,7 @@ function ViolationsPageInner() {
         onRowClick={handleRowClick}
         selectedIndex={selectedIdx}
         glossary={HPD_GLOSSARY}
-        rowHighlight={(r) => r.is_unit_match ? "bg-blue-50 border-l-4 border-l-blue-500" : r.is_floor_match ? "bg-blue-50/40 border-l-4 border-l-blue-200" : ""}
+        rowHighlight={(r) => r.is_unit_match ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500" : r.is_floor_match ? "bg-blue-50/40 border-l-4 border-l-blue-200" : ""}
       />
       <DetailDrawer
         open={!!selected}
@@ -130,5 +130,5 @@ function ViolationsPageInner() {
 }
 
 export default function ViolationsPage() {
-  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400">Loading...</div></div>}><ViolationsPageInner /></Suspense>;
+  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400 dark:text-gray-500">Loading...</div></div>}><ViolationsPageInner /></Suspense>;
 }

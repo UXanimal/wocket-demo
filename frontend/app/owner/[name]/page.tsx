@@ -40,7 +40,7 @@ interface Summary {
 }
 
 function gradeColor(g: string | null) {
-  if (!g) return "bg-gray-200 text-gray-700";
+  if (!g) return "bg-gray-200 text-gray-700 dark:text-gray-200";
   if (g === "A") return "bg-green-500 text-white";
   if (g === "B") return "bg-blue-500 text-white";
   if (g === "C") return "bg-yellow-500 text-white";
@@ -53,8 +53,8 @@ function gradeBadgeLight(g: string) {
   if (g === "B") return "bg-blue-100 text-blue-800 border-blue-300";
   if (g === "C") return "bg-yellow-100 text-yellow-800 border-yellow-300";
   if (g === "D") return "bg-orange-100 text-orange-800 border-orange-300";
-  if (g === "F") return "bg-red-100 text-red-800 border-red-300";
-  return "bg-gray-100 text-gray-700 border-gray-300";
+  if (g === "F") return "bg-red-100 text-red-800 dark:text-red-200 border-red-300";
+  return "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600";
 }
 
 function fmt$(v: any) {
@@ -67,7 +67,7 @@ const GRADES = ["A", "B", "C", "D", "F"];
 type SortKey = "address" | "borough" | "score_grade" | "open_class_c" | "total_hpd_violations" | "ecb_penalties" | "co_status";
 
 export default function OwnerPageWrapper() {
-  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400 text-lg">Loading...</div></div>}><OwnerPage /></Suspense>;
+  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400 dark:text-gray-500 text-lg">Loading...</div></div>}><OwnerPage /></Suspense>;
 }
 
 function OwnerPage() {
@@ -153,47 +153,47 @@ function OwnerPage() {
 
   function SortHeader({ label, field }: { label: string; field: SortKey }) {
     return (
-      <th className="pb-2 pr-2 cursor-pointer hover:text-gray-900 select-none" onClick={() => toggleSort(field)}>
+      <th className="pb-2 pr-2 cursor-pointer hover:text-gray-900 dark:text-gray-100 select-none" onClick={() => toggleSort(field)}>
         {label} {sortKey === field ? (sortAsc ? "↑" : "↓") : ""}
       </th>
     );
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="text-gray-400 text-lg">Loading...</div></div>;
+  if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="text-gray-400 dark:text-gray-500 text-lg">Loading...</div></div>;
   if (error) return <div className="flex items-center justify-center min-h-screen"><div className="text-red-500">{error}</div></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0f1117]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4">
+      <header className="bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:py-4">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
           <Link href="/" className="text-blue-600 hover:text-blue-800 font-bold text-lg shrink-0 font-nunito">Wocket</Link>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">{ownerName}</h1>
-          <span className="text-sm text-gray-400 shrink-0">Owner Portfolio</span>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">{ownerName}</h1>
+          <span className="text-sm text-gray-400 dark:text-gray-500 shrink-0">Owner Portfolio</span>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6">
         {/* Portfolio Summary */}
         {summary && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Portfolio Summary</h2>
+          <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Portfolio Summary</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
-                <div className="text-2xl font-bold font-nunito text-gray-900">{summary.total_buildings}</div>
-                <div className="text-xs text-gray-500">Buildings</div>
+                <div className="text-2xl font-bold font-nunito text-gray-900 dark:text-gray-100">{summary.total_buildings}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Buildings</div>
               </div>
               <div>
-                <div className={`text-2xl font-bold font-nunito ${summary.total_open_class_c > 0 ? "text-red-600" : "text-gray-900"}`}>{summary.total_open_class_c}</div>
-                <div className="text-xs text-gray-500">Open Class C</div>
+                <div className={`text-2xl font-bold font-nunito ${summary.total_open_class_c > 0 ? "text-red-600" : "text-gray-900 dark:text-gray-100"}`}>{summary.total_open_class_c}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Open Class C</div>
               </div>
               <div>
-                <div className="text-2xl font-bold font-nunito text-gray-900">{summary.total_hpd_violations}</div>
-                <div className="text-xs text-gray-500">HPD Violations</div>
+                <div className="text-2xl font-bold font-nunito text-gray-900 dark:text-gray-100">{summary.total_hpd_violations}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">HPD Violations</div>
               </div>
               <div>
-                <div className={`text-2xl font-bold font-nunito ${summary.total_ecb_penalties > 0 ? "text-red-600" : "text-gray-900"}`}>{fmt$(summary.total_ecb_penalties)}</div>
-                <div className="text-xs text-gray-500">ECB Penalties</div>
+                <div className={`text-2xl font-bold font-nunito ${summary.total_ecb_penalties > 0 ? "text-red-600" : "text-gray-900 dark:text-gray-100"}`}>{fmt$(summary.total_ecb_penalties)}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">ECB Penalties</div>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-4">
@@ -209,7 +209,7 @@ function OwnerPage() {
                   );
                 })}
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
+              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
                 {summary.total_litigations > 0 && (
                   <span className="text-red-600 font-medium">⚖️ {summary.total_litigations} HPD Lawsuit{summary.total_litigations > 1 ? "s" : ""}{summary.open_litigations > 0 ? ` (${summary.open_litigations} open)` : ""}</span>
                 )}
@@ -225,10 +225,10 @@ function OwnerPage() {
         )}
 
         {/* Map */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Properties Map</h2>
+        <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Properties Map</h2>
           <OwnerMap buildings={filtered} />
-          <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 mt-3 text-xs text-gray-500 dark:text-gray-400">
             <span>Grade:</span>
             {GRADES.map((g) => (
               <span key={g} className="flex items-center gap-1">
@@ -240,8 +240,8 @@ function OwnerPage() {
         </div>
 
         {/* Filters & Building List */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 md:p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Buildings ({filtered.length})</h2>
+        <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4 md:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Buildings ({filtered.length})</h2>
           
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -250,14 +250,14 @@ function OwnerPage() {
               placeholder="Filter by address..."
               value={addressSearch}
               onChange={(e) => setAddressSearch(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+              className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
             />
             {/* Grade pills */}
             {GRADES.map((g) => (
               <button
                 key={g}
                 onClick={() => setGradeFilter(gradeFilter === g ? null : g)}
-                className={`text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${gradeFilter === g ? gradeBadgeLight(g) + " ring-2 ring-offset-1 ring-blue-400" : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"}`}
+                className={`text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${gradeFilter === g ? gradeBadgeLight(g) + " ring-2 ring-offset-1 ring-blue-400" : "bg-gray-50 dark:bg-[#0f1117] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 "}`}
               >
                 {g}
               </button>
@@ -267,7 +267,7 @@ function OwnerPage() {
               <button
                 key={boro}
                 onClick={() => setBoroughFilter(boroughFilter === boro ? null : boro)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${boroughFilter === boro ? "bg-blue-100 text-blue-800 border-blue-300 ring-2 ring-offset-1 ring-blue-400" : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"}`}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${boroughFilter === boro ? "bg-blue-100 text-blue-800 border-blue-300 ring-2 ring-offset-1 ring-blue-400" : "bg-gray-50 dark:bg-[#0f1117] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 "}`}
               >
                 {boro}
               </button>
@@ -283,7 +283,7 @@ function OwnerPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-gray-500 border-b">
+                <tr className="text-left text-gray-500 dark:text-gray-400 border-b">
                   <SortHeader label="Address" field="address" />
                   <SortHeader label="Borough" field="borough" />
                   <SortHeader label="Grade" field="score_grade" />
@@ -298,21 +298,21 @@ function OwnerPage() {
                   <tr
                     key={b.bin}
                     onClick={() => router.push(`/building/${b.bin}`)}
-                    className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
+                    className="border-b border-gray-50 dark:border-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors"
                   >
-                    <td className="py-2.5 pr-2 font-medium text-gray-900">{b.address}</td>
-                    <td className="py-2.5 pr-2 text-gray-600">{b.borough}</td>
+                    <td className="py-2.5 pr-2 font-medium text-gray-900 dark:text-gray-100">{b.address}</td>
+                    <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{b.borough}</td>
                     <td className="py-2.5 pr-2">
                       <span className={`text-xs font-bold px-2 py-0.5 rounded ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
                     </td>
-                    <td className={`py-2.5 pr-2 ${(b.open_class_c || 0) > 0 ? "text-red-600 font-medium" : "text-gray-600"}`}>{b.open_class_c || 0}</td>
-                    <td className="py-2.5 pr-2 text-gray-600">{b.total_hpd_violations || 0}</td>
-                    <td className="py-2.5 pr-2 text-gray-600">{fmt$(b.ecb_penalties)}</td>
+                    <td className={`py-2.5 pr-2 ${(b.open_class_c || 0) > 0 ? "text-red-600 font-medium" : "text-gray-600 dark:text-gray-300"}`}>{b.open_class_c || 0}</td>
+                    <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{b.total_hpd_violations || 0}</td>
+                    <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{fmt$(b.ecb_penalties)}</td>
                     <td className="py-2.5 pr-2">
                       {b.tco_expired ? (
                         <span className="text-red-600 text-xs font-medium">Expired TCO</span>
                       ) : (
-                        <span className="text-gray-600 text-xs">{b.co_status || "—"}</span>
+                        <span className="text-gray-600 dark:text-gray-300 text-xs">{b.co_status || "—"}</span>
                       )}
                     </td>
                   </tr>
@@ -320,7 +320,7 @@ function OwnerPage() {
               </tbody>
             </table>
             {filtered.length === 0 && (
-              <div className="text-center text-gray-400 py-8">No buildings match your filters</div>
+              <div className="text-center text-gray-400 dark:text-gray-500 py-8">No buildings match your filters</div>
             )}
           </div>
         </div>

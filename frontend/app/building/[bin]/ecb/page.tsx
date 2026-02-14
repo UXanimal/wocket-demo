@@ -19,9 +19,9 @@ const ECB_GLOSSARY: GlossarySection[] = [
     title: "Violation Status",
     entries: [
       { code: "DEFAULT", label: "Respondent failed to appear at hearing — penalty imposed automatically", color: "text-red-500" },
-      { code: "RESOLVE", label: "Violation resolved — penalty paid or condition corrected", color: "text-gray-400" },
+      { code: "RESOLVE", label: "Violation resolved — penalty paid or condition corrected", color: "text-gray-400 dark:text-gray-500" },
       { code: "PENDING", label: "Case is pending hearing or resolution", color: "text-yellow-400" },
-      { code: "DISMISSED", label: "Violation was dismissed at hearing", color: "text-gray-400" },
+      { code: "DISMISSED", label: "Violation was dismissed at hearing", color: "text-gray-400 dark:text-gray-500" },
     ],
   },
   {
@@ -71,15 +71,15 @@ function EcbPageInner() {
             const s = String(r.severity || "");
             if (s.includes("1")) return <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Class 1</span>;
             if (s === "Hazardous" || s.includes("2")) return <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">{s.includes("2") ? "Class 2" : "Hazardous"}</span>;
-            if (s === "Non-Hazardous" || s.includes("3")) return <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">{s.includes("3") ? "Class 3" : "Non-Hazardous"}</span>;
-            return <span className="text-xs text-gray-400">{r.severity || "—"}</span>;
+            if (s === "Non-Hazardous" || s.includes("3")) return <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">{s.includes("3") ? "Class 3" : "Non-Hazardous"}</span>;
+            return <span className="text-xs text-gray-400 dark:text-gray-500">{r.severity || "—"}</span>;
           }},
           { key: "issue_date", label: "Issue Date", render: (r) => formatDate(r.issue_date) },
           { key: "ecb_violation_status", label: "Status", render: (r) => {
             const s = r.ecb_violation_status;
             if (s === "ACTIVE") return <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">ACTIVE</span>;
-            if (s === "RESOLVE") return <span className="text-gray-500">RESOLVED</span>;
-            return <span className="text-gray-400">{s || "—"}</span>;
+            if (s === "RESOLVE") return <span className="text-gray-500 dark:text-gray-400">RESOLVED</span>;
+            return <span className="text-gray-400 dark:text-gray-500">{s || "—"}</span>;
           }},
           { key: "violation_description", label: "Description", className: "max-w-xs truncate" },
           { key: "penality_imposed", label: "Penalty", render: (r) => fmt$(r.penality_imposed) },
@@ -90,8 +90,8 @@ function EcbPageInner() {
             { value: "CLASS - 1", label: "Class 1 — Immediately Hazardous", color: "bg-red-100 text-red-700" },
             { value: "CLASS - 2", label: "Class 2 — Major", color: "bg-orange-100 text-orange-700" },
             { value: "Hazardous", label: "Hazardous", color: "bg-orange-100 text-orange-700" },
-            { value: "Non-Hazardous", label: "Non-Hazardous", color: "bg-gray-100 text-gray-700" },
-            { value: "CLASS - 3", label: "Class 3 — Minor", color: "bg-gray-100 text-gray-700" },
+            { value: "Non-Hazardous", label: "Non-Hazardous", color: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200" },
+            { value: "CLASS - 3", label: "Class 3 — Minor", color: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200" },
           ]},
           { key: "status", label: "Status", options: [
             { value: "ACTIVE", label: "Active", color: "bg-red-100 text-red-700" },
@@ -104,7 +104,7 @@ function EcbPageInner() {
         onRowClick={handleRowClick}
         selectedIndex={selectedIdx}
         glossary={ECB_GLOSSARY}
-        rowHighlight={(r) => r.is_unit_match ? "bg-blue-50 border-l-4 border-l-blue-500" : r.ecb_violation_status === "ACTIVE" ? "bg-red-50/40" : ""}
+        rowHighlight={(r) => r.is_unit_match ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500" : r.ecb_violation_status === "ACTIVE" ? "bg-red-50/40" : ""}
       />
       <DetailDrawer
         open={!!selected}
@@ -139,5 +139,5 @@ function EcbPageInner() {
 }
 
 export default function EcbPage() {
-  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400">Loading...</div></div>}><EcbPageInner /></Suspense>;
+  return <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-400 dark:text-gray-500">Loading...</div></div>}><EcbPageInner /></Suspense>;
 }

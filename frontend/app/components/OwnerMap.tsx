@@ -97,7 +97,7 @@ export default function OwnerMap({ buildings }: { buildings: Building[] }) {
 
   if (withCoords.length === 0) {
     return (
-      <div className="bg-gray-100 rounded-xl border border-gray-200 h-64 flex items-center justify-center text-gray-400 text-sm">
+      <div className="bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 h-64 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
         No coordinates available for mapping
       </div>
     );
@@ -105,9 +105,9 @@ export default function OwnerMap({ buildings }: { buildings: Building[] }) {
 
   return (
     <div>
-      <div ref={mapRef} className="w-full h-80 md:h-96 rounded-xl border border-gray-200 z-0" />
+      <div ref={mapRef} className="w-full h-80 md:h-96 rounded-xl border border-gray-200 dark:border-gray-700 z-0" />
       {withCoords.length < buildings.length && (
-        <div className="text-xs text-gray-400 mt-2">
+        <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
           Showing {withCoords.length} of {buildings.length} properties on map ({buildings.length - withCoords.length} missing coordinates)
         </div>
       )}

@@ -21,7 +21,7 @@ export default function CodeGlossary({ sections }: { sections: GlossarySection[]
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1 text-xs text-gray-400 px-2 py-1"
+        className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 px-2 py-1"
         title="Code definitions"
       >
         <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-400 text-white text-[10px] font-bold leading-none shrink-0">i</span>
@@ -37,7 +37,7 @@ export default function CodeGlossary({ sections }: { sections: GlossarySection[]
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Code Definitions</h3>
-              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-white text-xl leading-none">&times;</button>
+              <button onClick={() => setOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-white text-xl leading-none">&times;</button>
             </div>
 
             {sections.map((section, i) => (

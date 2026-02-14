@@ -8,6 +8,22 @@
   --accent: #2563eb;
   --danger: #dc2626;
   --warning: #f59e0b;
+  --border: #e5e7eb;
+  --card-hover: #f9fafb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1117;
+    --card: #1a1b2e;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --accent: #60a5fa;
+    --danger: #f87171;
+    --warning: #fbbf24;
+    --border: #2d2f3d;
+    --card-hover: #22243a;
+  }
 }
 
 body {

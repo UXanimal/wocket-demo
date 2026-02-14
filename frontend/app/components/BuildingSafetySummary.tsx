@@ -78,17 +78,17 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
 
   if (flags.length === 0) {
     return (
-      <div className={`bg-white rounded-xl border border-gray-200 border-l-4 ${borderColor} shadow-sm px-4 py-3`}>
-        <span className="text-sm text-gray-700">✅ No critical issues found in city records.</span>
+      <div className={`bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 border-l-4 ${borderColor} shadow-sm dark:shadow-none px-4 py-3`}>
+        <span className="text-sm text-gray-700 dark:text-gray-200">✅ No critical issues found in city records.</span>
       </div>
     );
   }
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 border-l-4 ${borderColor} shadow-sm px-4 py-3`}>
+    <div className={`bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 border-l-4 ${borderColor} shadow-sm dark:shadow-none px-4 py-3`}>
       <div className="space-y-1">
         {flags.map((f, i) => (
-          <div key={i} className="text-sm text-gray-800">
+          <div key={i} className="text-sm text-gray-800 dark:text-gray-200">
             {f.emoji} {f.text}
           </div>
         ))}
