@@ -40,6 +40,21 @@ const DEFAULT_CONFIG: ReportConfig = {
 // ─── Print & Legal Document Styles ───────────────────────
 
 const legalStyles = `
+  #report-content,
+  #report-content h1,
+  #report-content h2,
+  #report-content h3,
+  #report-content p,
+  #report-content div,
+  #report-content span,
+  #report-content li {
+    font-family: 'Times New Roman', Georgia, serif !important;
+  }
+  #report-content table,
+  #report-content table th,
+  #report-content table td {
+    font-family: 'Inter', -apple-system, sans-serif !important;
+  }
   @media print {
     body { margin: 0; padding: 0; }
     .print\\:hidden { display: none !important; }
@@ -350,6 +365,7 @@ function ReportPage() {
           fontSize: "12pt",
           lineHeight: "2",
         }}
+        id="report-content"
       >
         {/* Report Header — Legal Document Caption */}
         <div className="border-b-2 border-gray-900 pb-4 mb-6" style={{ textAlign: "center" }}>
