@@ -89,13 +89,13 @@ function ComplaintsPageInner() {
         columns={[
           { key: "date_entered", label: "Date Filed" },
           { key: "category_description", label: "Category", render: (r) => (
-            <span><span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.complaint_category}</span>{r.category_description || ""}</span>
+            <span><span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.complaint_category}</span>{r.category_description && r.category_description !== r.complaint_category ? r.category_description : ""}</span>
           )},
           { key: "status", label: "Status", render: (r) => (
             <span className={r.status === "ACTIVE" ? "text-red-600 font-medium" : "text-gray-500 dark:text-gray-400"}>{r.status}</span>
           )},
           { key: "disposition_description", label: "Disposition", render: (r) => (
-            <span>{r.disposition_code ? <span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.disposition_code}</span> : null}{r.disposition_description || r.disposition_code || "—"}</span>
+            <span>{r.disposition_code ? <span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.disposition_code}</span> : null}{r.disposition_description && r.disposition_description !== r.disposition_code ? r.disposition_description : ""}</span>
           )},
           { key: "inspection_date", label: "Inspected" },
         ]}
@@ -121,12 +121,12 @@ function ComplaintsPageInner() {
           { label: "Complaint #", value: selected.complaint_number },
           { label: "Date Filed", value: selected.date_entered },
           { label: "Status", value: selected.status },
-          { label: "Category", value: `${selected.complaint_category} — ${selected.bisweb?.category_full || selected.category_description || "Unknown"}` },
+          { label: "Category", value: selected.bisweb?.category_full || (selected.category_description && selected.category_description !== selected.complaint_category ? `${selected.complaint_category} — ${selected.category_description}` : selected.complaint_category) },
           ...(selected.bisweb?.description ? [{ label: "Re", value: redactSlurs(selected.bisweb.description), full: true }] : []),
           { label: "Unit", value: selected.unit },
           ...(selected.bisweb?.assigned_to ? [{ label: "Assigned To", value: selected.bisweb.assigned_to }] : []),
           ...(selected.bisweb?.priority ? [{ label: "Priority", value: selected.bisweb.priority }] : []),
-          { label: "Disposition", value: selected.disposition_code ? `${selected.disposition_code} — ${selected.bisweb?.disposition_text || selected.disposition_description || "Unknown"}` : "—" },
+          { label: "Disposition", value: selected.disposition_code ? (selected.bisweb?.disposition_text || (selected.disposition_description && selected.disposition_description !== selected.disposition_code ? `${selected.disposition_code} — ${selected.disposition_description}` : selected.disposition_code)) : "—" },
           { label: "Disposition Date", value: selected.disposition_date },
           { label: "Inspection Date", value: selected.inspection_date },
           ...(selected.bisweb?.last_inspection_badge ? [{ label: "Inspector Badge #", value: selected.bisweb.last_inspection_badge }] : []),

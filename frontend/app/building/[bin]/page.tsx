@@ -836,11 +836,11 @@ function BuildingPage() {
                       {complaints.slice(0, 10).map((c: any, i: number) => (
                         <tr key={i} onClick={() => openDrawer("complaint" as any, i, complaints.slice(0, 10))} className="border-b border-gray-50 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117] transition-colors">
                           <td className="py-2 pr-2 text-xs">{c.date_entered || "—"}</td>
-                          <td className="py-2 pr-2 text-xs">{c.category_description || c.complaint_category || "—"}</td>
+                          <td className="py-2 pr-2 text-xs">{c.category_description && c.category_description !== c.complaint_category ? c.category_description : c.complaint_category || "—"}</td>
                           <td className="py-2 pr-2 text-xs">
                             <span className={c.status === 'ACTIVE' ? 'text-red-600 font-medium' : 'text-gray-500'}>{c.status}</span>
                           </td>
-                          <td className="py-2 pr-2 text-xs">{c.disposition_description || c.disposition_code || "—"}</td>
+                          <td className="py-2 pr-2 text-xs">{c.disposition_description && c.disposition_description !== c.disposition_code ? c.disposition_description : c.disposition_code || "—"}</td>
                           <td className="py-2 text-xs">{c.inspection_date || "—"}</td>
                         </tr>
                       ))}
@@ -1079,11 +1079,11 @@ function BuildingPage() {
             { label: "Complaint #", value: drawerItem.complaint_number },
             { label: "Date Filed", value: drawerItem.date_entered },
             { label: "Status", value: drawerItem.status },
-            { label: "Category", value: `${drawerItem.complaint_category} — ${drawerItem.bisweb?.category_full || drawerItem.category_description || "Unknown"}` },
+            { label: "Category", value: drawerItem.bisweb?.category_full || (drawerItem.category_description && drawerItem.category_description !== drawerItem.complaint_category ? `${drawerItem.complaint_category} — ${drawerItem.category_description}` : drawerItem.complaint_category) },
             ...(drawerItem.bisweb?.description ? [{ label: "Re", value: redactSlurs(drawerItem.bisweb.description), full: true }] : []),
             { label: "Unit", value: drawerItem.unit },
             ...(drawerItem.bisweb?.assigned_to ? [{ label: "Assigned To", value: drawerItem.bisweb.assigned_to }] : []),
-            { label: "Disposition", value: drawerItem.disposition_code ? `${drawerItem.disposition_code} — ${drawerItem.bisweb?.disposition_text || drawerItem.disposition_description || "Unknown"}` : "—" },
+            { label: "Disposition", value: drawerItem.disposition_code ? (drawerItem.bisweb?.disposition_text || (drawerItem.disposition_description && drawerItem.disposition_description !== drawerItem.disposition_code ? `${drawerItem.disposition_code} — ${drawerItem.disposition_description}` : drawerItem.disposition_code)) : "—" },
             { label: "Disposition Date", value: drawerItem.disposition_date },
             { label: "Inspection Date", value: drawerItem.inspection_date },
             ...(drawerItem.bisweb?.last_inspection_badge ? [{ label: "Inspector Badge #", value: drawerItem.bisweb.last_inspection_badge }] : []),
