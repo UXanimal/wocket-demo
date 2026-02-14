@@ -78,6 +78,7 @@ function OwnerPage() {
   const ownerName = decodeURIComponent(params.name as string);
   const mode = searchParams.get("mode") || "";
   const fromBin = searchParams.get("from") || "";
+  const selectedNetworkNode = searchParams.get("selected") || "";
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -250,10 +251,10 @@ function OwnerPage() {
         </div>
 
         {/* Ownership Network */}
-        <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4 md:p-6">
+        <div id="network" className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4 md:p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Ownership Network</h2>
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Connected people, entities, and buildings traced through HPD registration records</p>
-          <OwnerNetwork centerName={ownerName} />
+          <OwnerNetwork centerName={ownerName} initialSelectedId={selectedNetworkNode || undefined} />
         </div>
 
         {/* Filters & Building List */}

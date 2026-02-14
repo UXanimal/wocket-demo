@@ -233,6 +233,8 @@ function BuildingPage() {
   const bin = params.bin as string;
   const apt = searchParams.get("apt") || "";
   const addrParam = searchParams.get("addr") || "";
+  const fromOwner = searchParams.get("from_owner") || "";
+  const networkNode = searchParams.get("network_node") || "";
   
   // Build query string to preserve across navigation
   const qs = new URLSearchParams();
@@ -304,6 +306,7 @@ function BuildingPage() {
         <div className="max-w-5xl mx-auto flex items-center gap-2 md:gap-4">
           <Link href="/" className="text-blue-600 hover:text-blue-800 font-bold text-lg sm:text-xl shrink-0 font-nunito leading-none py-2">Wocket</Link>
           <div className="flex-1 min-w-3" />
+          {fromOwner && <Link href={`/owner/${encodeURIComponent(fromOwner)}#network${networkNode ? `?selected=${encodeURIComponent(networkNode)}` : ""}`} className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0 hidden sm:block">← Back to owner</Link>}
           <div className="w-full max-w-[220px] sm:max-w-sm min-w-0"><SearchBar /></div>
         </div>
       </header>
