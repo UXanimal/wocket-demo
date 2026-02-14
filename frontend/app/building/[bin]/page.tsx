@@ -304,7 +304,8 @@ function BuildingPage() {
       <header className="bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:py-4">
         <div className="max-w-5xl mx-auto flex items-center gap-2 md:gap-4">
           <Link href="/" className="text-blue-600 hover:text-blue-800 font-bold text-lg shrink-0 font-nunito">Wocket</Link>
-          <div className="flex-1 min-w-0"><SearchBar /></div>
+          <div className="flex-1" />
+          <div className="w-full max-w-sm min-w-0"><SearchBar /></div>
         </div>
       </header>
 
