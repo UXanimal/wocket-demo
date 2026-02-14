@@ -315,7 +315,7 @@ function BuildingPage() {
 
       <main className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-3 md:space-y-4">
         {/* Address title + grade */}
-        <div className="flex flex-wrap items-center gap-3 mb-1">
+        <div className="flex flex-wrap items-baseline gap-3 mb-1">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">
             {addrParam && addrParam !== b.address ? addrParam : b.address}
           </h1>
