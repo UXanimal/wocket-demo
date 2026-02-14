@@ -146,12 +146,13 @@ function Stat({ label, value, color }: { label: string; value: any; color?: stri
   );
 }
 
-function Callout({ label, value, warn }: { label: string; value: any; warn?: boolean }) {
-  return (
-    <div className={`rounded-lg px-3 py-2 text-sm ${warn ? "bg-red-50 dark:bg-red-900/20 text-red-700" : "bg-gray-50 dark:bg-[#0f1117] text-gray-700 dark:text-gray-200"}`}>
-      <span className="font-medium">{label}:</span> {value ?? 0}
-    </div>
-  );
+function Callout({ label, value, warn, href }: { label: string; value: any; warn?: boolean; href?: string }) {
+  const cls = `rounded-lg px-3 py-2 text-sm ${warn ? "bg-red-50 dark:bg-red-900/20 text-red-700" : "bg-gray-50 dark:bg-[#0f1117] text-gray-700 dark:text-gray-200"}`;
+  const content = <><span className="font-medium">{label}:</span> {value ?? 0}</>;
+  if (href) {
+    return <Link href={href} className={`${cls} hover:brightness-90 dark:hover:brightness-125 transition-all cursor-pointer block`}>{content}</Link>;
+  }
+  return <div className={cls}>{content}</div>;
 }
 
 function LegalNote({ children }: { children: React.ReactNode }) {
@@ -475,10 +476,10 @@ function BuildingPage() {
               <Stat label="Last Inspection" value={formatDate(lastInspection)} />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <Callout label="Lead Paint (open)" value={leadPaint} warn={leadPaint > 0} />
-              <Callout label="Fire Safety (open)" value={fireSafety} warn={fireSafety > 0} />
-              <Callout label="Pest (open)" value={pest} warn={pest > 0} />
-              <Callout label="Mold (open)" value={mold} warn={mold > 0} />
+              <Callout label="Lead Paint (open)" value={leadPaint} warn={leadPaint > 0} href={leadPaint > 0 ? `/building/${bin}/violations?search=lead&status=Open&sort=severity${qsStr ? '&' + qsStr.slice(1) : ''}` : undefined} />
+              <Callout label="Fire Safety (open)" value={fireSafety} warn={fireSafety > 0} href={fireSafety > 0 ? `/building/${bin}/violations?search=fire&status=Open&sort=severity${qsStr ? '&' + qsStr.slice(1) : ''}` : undefined} />
+              <Callout label="Pest (open)" value={pest} warn={pest > 0} href={pest > 0 ? `/building/${bin}/violations?search=pest&status=Open&sort=severity${qsStr ? '&' + qsStr.slice(1) : ''}` : undefined} />
+              <Callout label="Mold (open)" value={mold} warn={mold > 0} href={mold > 0 ? `/building/${bin}/violations?search=mold&status=Open&sort=severity${qsStr ? '&' + qsStr.slice(1) : ''}` : undefined} />
             </div>
           </div>
           {openViolations.length > 0 && (
