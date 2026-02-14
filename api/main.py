@@ -462,14 +462,35 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     """, (bin_number,))
     contacts = cur.fetchall()
 
-    # HPD Litigations
+    # HPD Litigations — by BIN + by owner name (across all buildings)
+    owner_name = building.get('owner_name', '') if building else ''
     cur.execute("""
-        SELECT litigationid, casetype, caseopendate, casestatus, casejudgement, respondent
+        SELECT DISTINCT ON (litigationid) litigationid, casetype, caseopendate, casestatus, casejudgement, respondent, bin
         FROM hpd_litigations
         WHERE bin = %s
-        ORDER BY caseopendate DESC NULLS LAST
+        ORDER BY litigationid, caseopendate DESC NULLS LAST
     """, (bin_number,))
-    litigations = cur.fetchall()
+    building_litigations = cur.fetchall()
+    
+    # Owner-wide litigations (respondent matches owner name)
+    owner_litigations = []
+    if owner_name and len(owner_name) > 3:
+        cur.execute("""
+            SELECT litigationid, casetype, caseopendate, casestatus, casejudgement, respondent, bin
+            FROM hpd_litigations
+            WHERE respondent ILIKE %s AND bin != %s
+            ORDER BY caseopendate DESC NULLS LAST
+            LIMIT 100
+        """, (f"%{owner_name}%", bin_number))
+        owner_litigations = cur.fetchall()
+    
+    # Mark source
+    for l in building_litigations:
+        l['source'] = 'building'
+    for l in owner_litigations:
+        l['source'] = 'owner'
+    
+    litigations = building_litigations + owner_litigations
 
     cur.close()
     conn.close()
@@ -685,10 +706,11 @@ def get_owner_portfolio(
     # Get unique boroughs for filter options
     boroughs = sorted(set(b['borough'] for b in buildings if b['borough']))
     
-    # HPD litigations across all buildings
+    # HPD litigations across all buildings + respondent name match
     all_bin_list = [b['bin'] for b in buildings if b['bin']]
     total_litigations = 0
     open_litigations = 0
+    litigation_records = []
     if all_bin_list:
         cur.execute("""
             SELECT COUNT(*) as total,
@@ -698,6 +720,18 @@ def get_owner_portfolio(
         lit_row = cur.fetchone()
         total_litigations = lit_row['total'] or 0
         open_litigations = lit_row['open'] or 0
+        
+        # Also find litigations by respondent name match (catches cases at non-portfolio buildings)
+        cur.execute("""
+            SELECT litigationid, casetype, caseopendate, casestatus, casejudgement, respondent, bin
+            FROM hpd_litigations
+            WHERE bin = ANY(%s) OR respondent ILIKE %s
+            ORDER BY caseopendate DESC NULLS LAST
+            LIMIT 200
+        """, (all_bin_list, f"%{name}%"))
+        litigation_records = cur.fetchall()
+        total_litigations = max(total_litigations, len(litigation_records))
+        open_litigations = sum(1 for l in litigation_records if l.get('casestatus') == 'OPEN')
     
     cur.close()
     conn.close()
@@ -718,6 +752,7 @@ def get_owner_portfolio(
             "open_litigations": open_litigations,
         },
         "buildings": buildings,
+        "litigations": litigation_records,
     }
 
 
