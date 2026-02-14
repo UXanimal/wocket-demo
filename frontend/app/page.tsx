@@ -22,9 +22,9 @@ export default function Home() {
       <section className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white py-20 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
-            Know your building.<br />Before you sign — or while you live there.
+            How safe is your building?
           </h2>
-          <p className="text-lg text-blue-200 mb-10">Violations, permits, ownership, and C of O status for every building in NYC — from official city records.</p>
+          <p className="text-lg text-blue-200 mb-10">Violations, complaints, permits, and ownership records for every building in NYC — from official city data.</p>
           <SearchBar large />
         </div>
       </section>
