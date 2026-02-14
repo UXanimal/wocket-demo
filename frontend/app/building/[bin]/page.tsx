@@ -87,7 +87,7 @@ function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: strin
               Generating summary...
             </span>
           ) : (
-            "✨ Generate AI Summary"
+            "✨ Generate Summary"
           )}
         </button>
       )}

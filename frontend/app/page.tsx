@@ -6,7 +6,7 @@ const cards = [
   { icon: "🏠", title: "Find a Safe Home", desc: "Check any building before you sign a lease. See violations, complaints, and C of O status so you know what you're walking into." },
   { icon: "⚠️", title: "Track Expired TCOs", desc: "Explore buildings operating on expired Temporary Certificates of Occupancy in violation of NYC law. See how long they've been overdue." },
   { icon: "🎯", title: "Filter by Apartment", desc: "Enter your unit number to highlight violations and complaints specific to your floor and apartment — across every section." },
-  { icon: "🤖", title: "AI Building Summaries", desc: "Get plain-language analysis of a building's condition, flagging patterns that matter — open hazardous violations, permit gaps, and recurring complaints." },
+  { icon: "🤖", title: "Building Summaries", desc: "Get plain-language analysis of a building's condition, flagging patterns that matter — open hazardous violations, permit gaps, and recurring complaints." },
 ];
 
 export default function Home() {
