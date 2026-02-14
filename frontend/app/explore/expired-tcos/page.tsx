@@ -20,6 +20,8 @@ interface Building {
   co_status: string | null;
   tco_expired: boolean;
   latest_tco_date: string | null;
+  first_tco_date: string | null;
+  legal_expiration_date: string | null;
   unsigned_jobs: number | null;
   owner_name: string;
   latitude: number | null;
@@ -272,6 +274,7 @@ export default function ExpiredTCOsPage() {
                   <SortHeader label="Open C" field="open_class_c" />
                   <SortHeader label="HPD Viol." field="total_hpd_violations" />
                   <SortHeader label="Last TCO" field="latest_tco_date" />
+                  <th className="pb-2 pr-2 text-left">Legally Expired</th>
                 </tr>
               </thead>
               <tbody>
@@ -297,7 +300,17 @@ export default function ExpiredTCOsPage() {
                       <td className="py-2.5 pr-2 text-gray-600">{(b.total_hpd_violations || 0).toLocaleString()}</td>
                       <td className="py-2.5 pr-2">
                         <div className="text-red-600 text-xs font-medium">{formatDate(b.latest_tco_date)}</div>
-                        {days != null && <div className="text-red-400 text-xs">{formatDays(days)} expired</div>}
+                        {days != null && <div className="text-red-400 text-xs">{formatDays(days)} ago</div>}
+                      </td>
+                      <td className="py-2.5 pr-2">
+                        {b.legal_expiration_date ? (
+                          <>
+                            <div className="text-red-600 text-xs font-medium">{formatDate(b.legal_expiration_date)}</div>
+                            {(() => { const d = daysSince(b.legal_expiration_date); return d != null && d > 0 ? <div className="text-red-400 text-xs">{formatDays(d)} overdue</div> : null; })()}
+                          </>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
                       </td>
                     </tr>
                   );

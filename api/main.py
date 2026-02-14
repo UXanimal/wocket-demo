@@ -785,11 +785,18 @@ def explore_expired_tcos(
     sort_dir = "ASC" if (order or "").lower() == "asc" else "DESC"
     
     cur.execute(f"""
-        SELECT bin, address, aliases, borough, zip, score_grade,
-            open_class_c, total_hpd_violations, total_ecb_violations,
-            ecb_penalties, co_status, tco_expired, latest_tco_date, unsigned_jobs, owner_name,
-            latitude, longitude
-        FROM building_scores
+        SELECT bs.bin, bs.address, bs.aliases, bs.borough, bs.zip, bs.score_grade,
+            bs.open_class_c, bs.total_hpd_violations, bs.total_ecb_violations,
+            bs.ecb_penalties, bs.co_status, bs.tco_expired, bs.latest_tco_date, bs.unsigned_jobs, bs.owner_name,
+            bs.latitude, bs.longitude,
+            first_tco.first_tco_date,
+            (first_tco.first_tco_date + INTERVAL '2 years')::date as legal_expiration_date
+        FROM building_scores bs
+        LEFT JOIN LATERAL (
+            SELECT MIN(c_o_issue_date) as first_tco_date
+            FROM certificates_of_occupancy co
+            WHERE co.bin = bs.bin AND co.issue_type = 'Temporary'
+        ) first_tco ON TRUE
         WHERE {where}
         ORDER BY {sort_col} {sort_dir} NULLS LAST
     """, params)
