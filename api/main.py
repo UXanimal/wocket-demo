@@ -239,15 +239,40 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     co_records = cur.fetchall()
     
     # First and latest TCO dates (for TCO duration calculation)
+    # Combine BISweb CO records with DOB NOW CO records
     first_tco_date = None
     latest_tco_date = None
     if building.get('co_status') == 'TCO':
+        # BISweb: first TCO
         tco_records = [r for r in co_records if (r.get('issue_type') or '').upper() == 'TEMPORARY']
-        if tco_records:
-            dates = [r['c_o_issue_date'] for r in tco_records if r.get('c_o_issue_date')]
-            if dates:
-                first_tco_date = str(min(dates))
-                latest_tco_date = str(max(dates))
+        bisweb_dates = [r['c_o_issue_date'] for r in tco_records if r.get('c_o_issue_date')]
+        if bisweb_dates:
+            first_tco_date = str(min(bisweb_dates))
+            latest_tco_date = str(max(bisweb_dates))
+        
+        # DOB NOW: check for newer renewals (dataset pkdm-hqz6)
+        cur.execute("""
+            SELECT c_of_o_issuance_date, c_of_o_filing_type
+            FROM dobnow_certificates_of_occupancy
+            WHERE bin = %s
+            ORDER BY c_of_o_issuance_date DESC
+        """, (bin_number,))
+        dobnow_co = cur.fetchall()
+        for rec in dobnow_co:
+            raw_date = rec.get('c_of_o_issuance_date', '')
+            if not raw_date:
+                continue
+            # Parse "12/16/24  4:13:04 PM" format
+            try:
+                from datetime import datetime as _dt
+                parsed = _dt.strptime(raw_date.strip(), "%m/%d/%y %I:%M:%S %p")
+                d = parsed.strftime("%Y-%m-%d")
+            except Exception:
+                continue
+            if not first_tco_date or d < first_tco_date:
+                first_tco_date = d
+            if not latest_tco_date or d > latest_tco_date:
+                latest_tco_date = d
 
     # Extract lat/long from first record that has it
     latitude = longitude = None
