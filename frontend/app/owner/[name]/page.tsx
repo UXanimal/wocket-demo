@@ -79,6 +79,7 @@ function OwnerPage() {
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [litigations, setLitigations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -122,6 +123,7 @@ function OwnerPage() {
       .then((data) => {
         setBuildings(data.buildings || []);
         setSummary(data.summary || null);
+        setLitigations(litigations || []);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -325,14 +327,14 @@ function OwnerPage() {
           </div>
         </div>
         {/* HPD Litigations */}
-        {data.litigations && data.litigations.length > 0 && (
+        {litigations && litigations.length > 0 && (
           <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4 md:p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">HPD Litigations</h2>
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Lawsuits brought by NYC against this owner for failing to fix violations</p>
             <div className="flex gap-4 mb-4 text-sm">
-              <div><span className="text-gray-500 dark:text-gray-400">Total Cases</span><div className="font-medium text-gray-900 dark:text-gray-100">{data.litigations.length}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">Open</span><div className="font-medium text-red-600">{data.litigations.filter((l: any) => l.casestatus === 'OPEN').length}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">Judgements</span><div className="font-medium text-orange-500">{data.litigations.filter((l: any) => l.casejudgement === 'YES').length}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">Total Cases</span><div className="font-medium text-gray-900 dark:text-gray-100">{litigations.length}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">Open</span><div className="font-medium text-red-600">{litigations.filter((l: any) => l.casestatus === 'OPEN').length}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">Judgements</span><div className="font-medium text-orange-500">{litigations.filter((l: any) => l.casejudgement === 'YES').length}</div></div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -346,7 +348,7 @@ function OwnerPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.litigations.map((l: any, i: number) => (
+                  {litigations.map((l: any, i: number) => (
                     <tr key={i} className={`border-b border-gray-50 dark:border-gray-800 ${l.casestatus === 'OPEN' ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
                       <td className="py-2 pr-2 text-xs">{l.casetype}</td>
                       <td className="py-2 pr-2 text-xs">{l.caseopendate ? l.caseopendate.slice(0, 10) : "—"}</td>
