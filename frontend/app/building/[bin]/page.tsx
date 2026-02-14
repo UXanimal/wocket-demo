@@ -423,7 +423,7 @@ function BuildingPage() {
 
 
         {/* Renter's Profile */}
-        <Collapsible title="Renter's Profile" defaultOpen={true} badge={<span className="text-xs text-gray-500 dark:text-gray-400">Apartment Hunter Snapshot</span>}>
+        <Collapsible title="Apartment Hunter's Guide" defaultOpen={true} badge={<span className="text-xs text-gray-500 dark:text-gray-400">What renters should know before signing a lease</span>}>
           <div className="mt-4">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {/* Construction */}
@@ -525,9 +525,9 @@ function BuildingPage() {
                 href={`/building/${bin}/renters-report${qsStr}`}
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors w-fit"
               >
-                📋 Generate Renter&apos;s Report
+                📋 Generate Apartment Report
               </Link>
-              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md">A printable summary of this building&apos;s safety record, open violations, construction activity, and landlord history — designed for apartment hunters and lease negotiations.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md">A printable safety snapshot covering open violations, construction activity, complaint history, and landlord track record — take it to your apartment viewing or lease negotiation.</p>
             </div>
           </div>
         </Collapsible>
