@@ -35,6 +35,113 @@ def get_db():
     return psycopg2.connect(DB_CONN)
 
 
+# ─── ECB Description Parsing ───────────────────────────────
+
+# Regex to extract apartment numbers from ECB violation descriptions
+# Matches: APT 11A, APT# 12C, APTS 11A & 11B, APT:#12B/11B, APARTMENT 5A, APT. 3B
+_APT_PATTERN = re.compile(
+    r'(?:APTS?\.?[:#\s]*|APARTMENTS?[:#\s]*)'
+    r'([\d]+[A-Z]?(?:\s*[&/,]\s*[\d]+[A-Z]?)*)',
+    re.IGNORECASE
+)
+# Split extracted apartment groups into individual apartments
+_APT_SPLIT = re.compile(r'[&/,]\s*')
+
+def extract_apartments_from_description(desc: str) -> list:
+    """Extract apartment numbers from ECB violation description text."""
+    if not desc:
+        return []
+    apts = set()
+    for match in _APT_PATTERN.finditer(desc):
+        group = match.group(1).strip()
+        parts = _APT_SPLIT.split(group)
+        for p in parts:
+            p = p.strip().upper()
+            if p and re.match(r'^\d+[A-Z]?$', p):
+                apts.add(p)
+    return sorted(apts)
+
+# Hazard keyword tags for ECB violations
+ECB_TAG_DEFINITIONS = {
+    "fire-stopping": {
+        "keywords": ["fire stopping", "firestopping", "fire-stopping", "fire stop"],
+        "icon": "🔥",
+        "label": "Fire Stopping",
+    },
+    "lead": {
+        "keywords": ["lead", "lead-based", "lead paint", "lead abatement"],
+        "icon": "🧪",
+        "label": "Lead",
+    },
+    "asbestos": {
+        "keywords": ["asbestos", " acm ", "asbestos-containing"],
+        "icon": "☣️",
+        "label": "Asbestos",
+    },
+    "mold": {
+        "keywords": ["mold", "mildew"],
+        "icon": "🌫️",
+        "label": "Mold",
+    },
+    "pest": {
+        "keywords": ["roach", "mice", "rat", "pest", "vermin", "bed bug", "bedbug"],
+        "icon": "🪳",
+        "label": "Pest",
+    },
+    "no-permit": {
+        "keywords": ["work without permit", "w/o permit", "no permit", "without a permit"],
+        "icon": "🚫",
+        "label": "No Permit",
+    },
+    "structural": {
+        "keywords": ["structural", "load-bearing", "load bearing", "demising wall", "gutted", "gutting"],
+        "icon": "🧱",
+        "label": "Structural",
+    },
+    "egress": {
+        "keywords": ["egress", "means of egress", "exit", "stairway", "fire escape"],
+        "icon": "🚪",
+        "label": "Egress",
+    },
+    "electrical": {
+        "keywords": ["electrical", "wiring", "electric"],
+        "icon": "⚡",
+        "label": "Electrical",
+    },
+    "plumbing": {
+        "keywords": ["plumbing", "gas line", "gas pipe", "piping"],
+        "icon": "🔧",
+        "label": "Plumbing",
+    },
+    "elevator": {
+        "keywords": ["elevator", "elev "],
+        "icon": "🛗",
+        "label": "Elevator",
+    },
+    "facade": {
+        "keywords": ["facade", "façade", "exterior wall", "falling debris"],
+        "icon": "🏢",
+        "label": "Facade",
+    },
+    "occupied": {
+        "keywords": ["occupied", "tenant", "residents"],
+        "icon": "👥",
+        "label": "Occupied During Work",
+    },
+}
+
+def tag_ecb_violation(desc: str) -> list:
+    """Return list of hazard tag dicts that match the ECB violation description."""
+    if not desc:
+        return []
+    desc_lower = desc.lower()
+    tags = []
+    for tag_id, defn in ECB_TAG_DEFINITIONS.items():
+        if any(kw in desc_lower for kw in defn["keywords"]):
+            tags.append({"id": tag_id, "icon": defn["icon"], "label": defn["label"]})
+    return tags
+
+
 # ─── Address Normalization ─────────────────────────────────
 
 def normalize_address_query(q: str) -> str:
@@ -157,6 +264,15 @@ def get_apartments(bin_number: str):
         for m in apt_pattern.finditer(desc):
             apts.add(m.group(1).upper())
 
+    # Also extract apartments from ECB violation descriptions
+    cur.execute("""
+        SELECT violation_description FROM ecb_violations
+        WHERE bin = %s AND violation_description IS NOT NULL
+    """, (bin_number,))
+    for (desc,) in cur.fetchall():
+        for a in extract_apartments_from_description(desc):
+            apts.add(a.upper())
+
     # Remove building-wide entries
     apts.discard('BLDG')
     apts.discard('')
@@ -230,11 +346,16 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     """, (bin_number,))
     ecb_violations = cur.fetchall()
 
+    # Always extract apartments and tags from ECB descriptions
+    for v in ecb_violations:
+        desc = v.get('violation_description') or ''
+        v['extracted_apartments'] = extract_apartments_from_description(desc)
+        v['tags'] = tag_ecb_violation(desc)
+
     # Annotate ECB if apt filter
     if apt:
         for v in ecb_violations:
-            desc = (v.get('violation_description') or '').upper()
-            v['is_unit_match'] = apt_upper in desc
+            v['is_unit_match'] = apt_upper in [a.upper() for a in v.get('extracted_apartments', [])]
     
     # C of O records + lat/long
     cur.execute("""
