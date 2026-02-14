@@ -85,20 +85,29 @@ function CompBar({ label, value, cityAvg, format = "number", higherIsWorse = tru
   const isWorse = higherIsWorse ? value > cityAvg : value < cityAvg;
   const fmtVal = format === "dollar" ? fmt$(value) : format === "percent" ? `${value.toFixed(1)}%` : value.toFixed(1);
   const fmtAvg = format === "dollar" ? fmt$(cityAvg) : format === "percent" ? `${cityAvg.toFixed(1)}%` : cityAvg.toFixed(1);
-  const pct = Math.min(ratio * 100, 200); // cap bar at 2x
+  // Bar scale: max of value or cityAvg = 100%
+  const maxVal = Math.max(value, cityAvg, 1);
+  const barPct = (value / maxVal) * 100;
+  const avgPct = (cityAvg / maxVal) * 100;
   const barColor = isWorse ? "bg-red-500" : "bg-green-500";
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex justify-between text-xs">
         <span className="text-gray-600 dark:text-gray-300 font-medium">{label}</span>
         <span className={`font-bold ${isWorse ? "text-red-600" : "text-green-600"}`}>{fmtVal}</span>
       </div>
-      <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden">
-        <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(pct, 100)}%` }} />
-        {/* City avg marker */}
-        <div className="absolute top-0 h-full w-0.5 bg-gray-500 dark:bg-gray-400" style={{ left: `${Math.min(100 / (Math.max(ratio, 1) > 1 ? ratio : 1) * (cityAvg > 0 ? 1 : 0), 100)}%` }} />
+      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full relative">
+        <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${barPct}%` }} />
+        {/* City avg marker — prominent triangle + line */}
+        <div className="absolute top-0 h-full flex flex-col items-center" style={{ left: `${avgPct}%`, transform: "translateX(-50%)" }}>
+          <div className="w-0.5 h-full bg-gray-900 dark:bg-white opacity-60" />
+        </div>
+        <div className="absolute -top-3 text-[9px] font-medium text-gray-600 dark:text-gray-300" style={{ left: `${avgPct}%`, transform: "translateX(-50%)" }}>▼ avg</div>
       </div>
-      <div className="text-[10px] text-gray-400 dark:text-gray-500">City avg: {fmtAvg}{ratio > 1.01 ? ` · ${ratio.toFixed(1)}× higher` : ratio < 0.99 ? ` · ${((1 - ratio) * 100).toFixed(0)}% lower` : ""}</div>
+      <div className="text-[10px] text-gray-400 dark:text-gray-500">
+        City avg: {fmtAvg}
+        {ratio > 1.01 ? <span className="text-red-500 font-medium"> · {ratio.toFixed(1)}× the city average</span> : ratio < 0.99 ? <span className="text-green-500 font-medium"> · {((1 - ratio) * 100).toFixed(0)}% below average</span> : " · at average"}
+      </div>
     </div>
   );
 }
@@ -282,9 +291,19 @@ function OwnerPage() {
                   <CompBar label="Litigations / Building" value={summary.comparisons.litigation_rate.value} cityAvg={summary.comparisons.litigation_rate.city_avg!} />
                   <CompBar label="% Buildings Graded F" value={summary.comparisons.pct_f_grade.value} cityAvg={summary.comparisons.pct_f_grade.city_avg!} format="percent" />
                 </div>
-                <div className="flex gap-4 mt-3 text-xs text-gray-400 dark:text-gray-500">
-                  <span>Violations rank: top {(100 - (summary.comparisons.violation_percentile.percentile || 0)).toFixed(0)}% worst</span>
-                  <span>Penalties rank: top {(100 - (summary.comparisons.penalty_percentile.percentile || 0)).toFixed(0)}% worst</span>
+                <div className="flex gap-4 mt-4 text-xs">
+                  <div className="bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                    <div className="text-gray-500 dark:text-gray-400">Violations</div>
+                    <div className={`font-bold text-sm ${(summary.comparisons.violation_percentile.percentile || 0) > 80 ? "text-red-600" : (summary.comparisons.violation_percentile.percentile || 0) > 50 ? "text-orange-600" : "text-green-600"}`}>
+                      Worse than {Math.round(summary.comparisons.violation_percentile.percentile || 0)}% of owners
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                    <div className="text-gray-500 dark:text-gray-400">ECB Penalties</div>
+                    <div className={`font-bold text-sm ${(summary.comparisons.penalty_percentile.percentile || 0) > 80 ? "text-red-600" : (summary.comparisons.penalty_percentile.percentile || 0) > 50 ? "text-orange-600" : "text-green-600"}`}>
+                      Worse than {Math.round(summary.comparisons.penalty_percentile.percentile || 0)}% of owners
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

@@ -254,32 +254,48 @@ export default function OwnerNetwork({ centerName, initialSelectedId, comparison
 
           {/* Network comparisons */}
           {comparisons && (
-            <div className="space-y-2 text-xs border-t border-gray-200 dark:border-gray-700 pt-3">
-              <div className="text-gray-500 dark:text-gray-400 font-medium mb-1">vs. City Owners</div>
-              {comparisons.avg_violations_per_building && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Violations/bldg</span>
-                  <span className={`font-bold ${comparisons.avg_violations_per_building.value > comparisons.avg_violations_per_building.city_avg ? "text-red-500" : "text-green-500"}`}>
-                    {comparisons.avg_violations_per_building.value.toFixed(1)}
-                    <span className="text-gray-400 font-normal"> / {comparisons.avg_violations_per_building.city_avg.toFixed(1)}</span>
-                  </span>
-                </div>
-              )}
-              {comparisons.avg_open_class_c_per_building && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Class C/bldg</span>
-                  <span className={`font-bold ${comparisons.avg_open_class_c_per_building.value > comparisons.avg_open_class_c_per_building.city_avg ? "text-red-500" : "text-green-500"}`}>
-                    {comparisons.avg_open_class_c_per_building.value.toFixed(1)}
-                    <span className="text-gray-400 font-normal"> / {comparisons.avg_open_class_c_per_building.city_avg.toFixed(1)}</span>
-                  </span>
-                </div>
-              )}
+            <div className="space-y-3 text-xs border-t border-gray-200 dark:border-gray-700 pt-3">
+              <div className="text-gray-600 dark:text-gray-300 font-semibold text-sm">vs. NYC Owners</div>
+              {comparisons.avg_violations_per_building && (() => {
+                const v = comparisons.avg_violations_per_building;
+                const ratio = v.city_avg > 0 ? v.value / v.city_avg : 0;
+                const isWorse = v.value > v.city_avg;
+                return (
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Violations / building</span>
+                      <span className={`font-bold ${isWorse ? "text-red-600" : "text-green-600"}`}>{v.value.toFixed(1)}</span>
+                    </div>
+                    <div className="text-[10px] text-gray-400">
+                      City avg: {v.city_avg.toFixed(1)}
+                      {ratio > 1.01 && <span className="text-red-500 font-medium"> · {ratio.toFixed(1)}×</span>}
+                    </div>
+                  </div>
+                );
+              })()}
+              {comparisons.avg_open_class_c_per_building && (() => {
+                const v = comparisons.avg_open_class_c_per_building;
+                const ratio = v.city_avg > 0 ? v.value / v.city_avg : 0;
+                const isWorse = v.value > v.city_avg;
+                return (
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Open Class C / building</span>
+                      <span className={`font-bold ${isWorse ? "text-red-600" : "text-green-600"}`}>{v.value.toFixed(1)}</span>
+                    </div>
+                    <div className="text-[10px] text-gray-400">
+                      City avg: {v.city_avg.toFixed(1)}
+                      {ratio > 1.01 && <span className="text-red-500 font-medium"> · {ratio.toFixed(1)}×</span>}
+                    </div>
+                  </div>
+                );
+              })()}
               {comparisons.violation_percentile && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Violation rank</span>
-                  <span className="font-bold text-gray-900 dark:text-gray-100">
-                    Top {(100 - comparisons.violation_percentile.percentile).toFixed(0)}%
-                  </span>
+                <div className="bg-gray-50 dark:bg-[#0a0b14] rounded-lg px-2.5 py-2 mt-1">
+                  <div className={`font-bold text-sm ${comparisons.violation_percentile.percentile > 80 ? "text-red-600" : comparisons.violation_percentile.percentile > 50 ? "text-orange-500" : "text-green-600"}`}>
+                    Worse than {Math.round(comparisons.violation_percentile.percentile)}%
+                  </div>
+                  <div className="text-[10px] text-gray-400">of NYC owners with 2+ buildings</div>
                 </div>
               )}
             </div>
