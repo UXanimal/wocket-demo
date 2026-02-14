@@ -160,14 +160,37 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       href: `/building/${bin}#litigations`,
     });
   }
-  if (unsignedJobs > 0) {
-    tiles.push({
-      value: String(unsignedJobs),
-      label: "Unsigned Alt. Jobs",
-      sublabel: "No final sign-off from DOB",
-      color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
-      href: `/building/${bin}/permits`,
+  // Construction status
+  {
+    const allPermits = [...(data.bis_jobs || []), ...(data.detailed_permits || [])];
+    const recentActive = allPermits.filter((j: any) => {
+      if (j.signed_off || j.risk_tier === 'clear') return false;
+      const desc = ((j.job_description || '') + ' ' + (j.work_type || '')).toUpperCase();
+      if (desc.includes('NO WORK') && !j.work_type) return false;
+      const d = j.latest_action_date || j.issued_date;
+      if (!d) return false;
+      return (Date.now() - new Date(d).getTime()) / 86400000 < 730;
     });
+    const workTypes = [...new Set(recentActive.map((j: any) => j.work_type).filter(Boolean))];
+    const hasStructural = workTypes.some(w => ['General Construction', 'Structural', 'Foundation'].includes(w));
+    const count = recentActive.length;
+    let constructionLevel = '';
+    let constructionColor = '';
+    if (count > 10 || hasStructural) { constructionLevel = 'Heavy Construction'; constructionColor = 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'; }
+    else if (count > 3 || workTypes.length > 1) { constructionLevel = 'Moderate Construction'; constructionColor = 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'; }
+    else if (count > 0) { constructionLevel = 'Minor Work'; constructionColor = 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400'; }
+    if (count > 0) {
+      const earliestDate = recentActive.map((j: any) => j.latest_action_date || j.issued_date).filter(Boolean).sort()[0];
+      const months = earliestDate ? Math.round((Date.now() - new Date(earliestDate as string).getTime()) / (30 * 86400000)) : 0;
+      const durStr = months >= 24 ? `${Math.floor(months/12)}+ years` : months >= 1 ? `${months} months` : 'recent';
+      tiles.push({
+        value: '🏗️',
+        label: constructionLevel,
+        sublabel: `${count} active permits · ${durStr}`,
+        color: constructionColor,
+        href: `/building/${bin}/permits`,
+      });
+    }
   }
   if (totalComplaints > 50) {
     tiles.push({

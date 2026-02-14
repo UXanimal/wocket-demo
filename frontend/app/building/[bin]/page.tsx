@@ -674,7 +674,38 @@ function BuildingPage() {
               <Stat label="Critical" value={criticalPermits.length} color={criticalPermits.length > 0 ? "text-red-600" : undefined} />
               <Stat label="High" value={highPermits.length} color={highPermits.length > 0 ? "text-red-400" : undefined} />
               <Stat label="Warning / Low" value={warningPermits.length + lowPermits.length} color={warningPermits.length + lowPermits.length > 0 ? "text-orange-500" : undefined} />
-              <Stat label="Signed Off" value={clearPermits.length} color={clearPermits.length > 0 ? "text-green-600" : undefined} />
+              {(() => {
+                // Construction status - computed inline
+                const allPermitsForStatus = [...bisJobs.map((j: any) => ({...j, source: 'BIS'})), ...detailedPermits];
+                const recentActive = allPermitsForStatus.filter((j: any) => {
+                  if (j.signed_off || j.risk_tier === 'clear') return false;
+                  const desc = (j.job_description || '').toUpperCase();
+                  if (desc.includes('NO WORK')) return false;
+                  const d = j.latest_action_date || j.issued_date;
+                  if (!d) return false;
+                  return (Date.now() - new Date(d).getTime()) / 86400000 < 730;
+                });
+                const workTypesCS = [...new Set(recentActive.map((j: any) => j.work_type).filter(Boolean))];
+                const hasStructuralCS = workTypesCS.some(w => ['General Construction', 'Structural', 'Foundation'].includes(w));
+                const countCS = recentActive.length;
+                const earliestDate = recentActive.map((j: any) => j.latest_action_date || j.issued_date).filter(Boolean).sort()[0];
+                const durationMonths = earliestDate ? Math.round((Date.now() - new Date(earliestDate as string).getTime()) / (30 * 86400000)) : 0;
+                const durationStr = durationMonths >= 24 ? `${Math.floor(durationMonths/12)}+ years` : durationMonths >= 1 ? `${durationMonths} months` : 'recent';
+
+                let level = ''; let color = '';
+                if (countCS > 10 || hasStructuralCS) { level = 'Heavy construction'; color = 'text-red-600'; }
+                else if (countCS > 3 || workTypesCS.length > 1) { level = 'Moderate construction'; color = 'text-orange-500'; }
+                else if (countCS > 0) { level = 'Minor work'; color = 'text-yellow-600'; }
+
+                return countCS > 0 ? (
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                    <div className={`text-lg font-semibold ${color}`}>🏗️ {level}</div>
+                    <div className="text-xs text-gray-500 mt-1">{durationStr} · {workTypesCS.join(', ') || 'Unknown'}</div>
+                  </div>
+                ) : (
+                  <Stat label="Construction" value="None" />
+                );
+              })()}
             </div>
             <div className="grid grid-cols-1 gap-2">
               {Object.entries(criticalByType).map(([wt, count]) => (
