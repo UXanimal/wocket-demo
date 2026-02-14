@@ -783,51 +783,35 @@ def get_owner_portfolio(
     # --- Comparison / percentile stats ---
     owner_building_count = total_buildings if total_buildings else 1  # avoid /0
 
-    # Single query: city-wide averages (owners with 2+ buildings) and this owner's percentiles
+    # City-wide averages + percentile ranking (owners with 2+ buildings)
+    # Compute percentile by counting how many owners have fewer violations/penalties than this owner
     cur.execute("""
         WITH owner_stats AS (
             SELECT
                 owner_name,
                 COUNT(*) AS bldg_count,
-                SUM(total_hpd_violations) AS sum_violations,
-                SUM(open_class_c) AS sum_open_c,
-                SUM(ecb_penalties) AS sum_penalties,
+                SUM(COALESCE(total_hpd_violations, 0)) AS sum_violations,
+                SUM(COALESCE(open_class_c, 0)) AS sum_open_c,
+                SUM(COALESCE(ecb_penalties, 0)) AS sum_penalties,
                 SUM(CASE WHEN score_grade = 'F' THEN 1 ELSE 0 END) AS f_count
             FROM building_scores
             WHERE owner_name IS NOT NULL
             GROUP BY owner_name
             HAVING COUNT(*) >= 2
-        ),
-        city AS (
-            SELECT
-                AVG(sum_violations::float / bldg_count) AS avg_viol_per_bldg,
-                AVG(sum_open_c::float / bldg_count) AS avg_open_c_per_bldg,
-                AVG(sum_penalties::float / bldg_count) AS avg_penalty_per_bldg,
-                AVG(f_count::float / bldg_count * 100) AS avg_pct_f,
-                COUNT(*) AS total_owners
-            FROM owner_stats
-        ),
-        ranked AS (
-            SELECT
-                owner_name,
-                PERCENT_RANK() OVER (ORDER BY sum_violations) AS viol_prank,
-                PERCENT_RANK() OVER (ORDER BY sum_penalties) AS penalty_prank
-            FROM owner_stats
         )
         SELECT
-            c.avg_viol_per_bldg,
-            c.avg_open_c_per_bldg,
-            c.avg_penalty_per_bldg,
-            c.avg_pct_f,
-            c.total_owners,
-            r.viol_prank,
-            r.penalty_prank
-        FROM city c
-        LEFT JOIN ranked r ON LOWER(r.owner_name) = LOWER(%s)
-    """, (name,))
+            AVG(sum_violations::float / bldg_count) AS avg_viol_per_bldg,
+            AVG(sum_open_c::float / bldg_count) AS avg_open_c_per_bldg,
+            AVG(sum_penalties::float / bldg_count) AS avg_penalty_per_bldg,
+            AVG(f_count::float / bldg_count * 100) AS avg_pct_f,
+            COUNT(*) AS total_owners,
+            COUNT(*) FILTER (WHERE sum_violations < %s)::float / GREATEST(COUNT(*), 1) AS viol_prank,
+            COUNT(*) FILTER (WHERE sum_penalties < %s)::float / GREATEST(COUNT(*), 1) AS penalty_prank
+        FROM owner_stats
+    """, (total_hpd, total_ecb))
     comp_row = cur.fetchone()
 
-    # Litigation city-wide avg: avg litigations per building across owners with 2+ buildings
+    # Litigation city-wide avg
     cur.execute("""
         WITH owner_lit AS (
             SELECT bs.owner_name, COUNT(DISTINCT hl.litigationid) AS lit_count, COUNT(DISTINCT bs.bin) AS bldg_count
