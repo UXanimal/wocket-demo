@@ -131,10 +131,10 @@ export default function OwnerMap({ buildings }: { buildings: Building[] }) {
         {mapMoved && (
           <button
             onClick={resetView}
-            className="absolute top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm z-[1000]"
+            className="absolute bottom-[10px] left-[10px] bg-white border-2 border-gray-400/60 rounded-sm w-[30px] h-[30px] flex items-center justify-center text-base text-gray-700 hover:bg-gray-100 shadow-none z-[1000] cursor-pointer leading-none"
             title="Reset map view"
           >
-            ⟲ Reset
+            ⟲
           </button>
         )}
       </div>
