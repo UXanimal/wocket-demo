@@ -7,6 +7,7 @@ import DetailDrawer from "../../components/DetailDrawer";
 import CodeGlossary from "../../components/CodeGlossary";
 import { redactSlurs } from "../../utils/redact";
 import BuildingSafetySummary from "../../components/BuildingSafetySummary";
+import PredictionCard from "../../components/PredictionCard";
 
 function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: string; updatedAt?: string }) {
   const [summary, setSummary] = useState(existing || "");
@@ -856,6 +857,9 @@ function BuildingPage() {
           </Collapsible>
           );
         })()}
+
+        {/* Complaint Resolution Predictions */}
+        <PredictionCard bin={bin} apiBase="" />
 
         {/* HPD Litigations */}
         {(() => {
