@@ -641,11 +641,11 @@ function BuildingPage() {
           {(bisJobs.length > 0 || detailedPermits.length > 0) && (() => {
             const RISK_ORDER: Record<string, number> = { critical: 0, warning: 1, active: 2, watch: 2, none: 3, clear: 4 };
             const riskDisc = (tier: string) => {
-              if (tier === 'critical') return <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />;
-              if (tier === 'warning') return <span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-400 shrink-0" />;
-              if (tier === 'active' || tier === 'watch') return <span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400 shrink-0" />;
-              if (tier === 'clear') return <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-400 shrink-0" />;
-              return <span className="inline-block w-2.5 h-2.5 rounded-full bg-gray-200 shrink-0" />;
+              if (tier === 'critical') return <span className="inline-block w-2 h-2 rounded-full bg-red-600 shrink-0" />;
+              if (tier === 'warning') return <span className="inline-block w-2 h-2 rounded-full bg-orange-500 shrink-0" />;
+              if (tier === 'active' || tier === 'watch') return <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 shrink-0" />;
+              if (tier === 'clear') return <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />;
+              return <span className="inline-block w-2 h-2 rounded-full bg-gray-400 shrink-0" />;
             };
             // Merge BIS jobs and detailed permits, dedup by job number, prefer detailed permits
             const byJob = new Map<string, any>();
