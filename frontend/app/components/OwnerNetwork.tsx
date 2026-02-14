@@ -39,6 +39,7 @@ interface Props {
   centerName: string;
   initialSelectedId?: string;
   comparisons?: NetworkComparisons | null;
+  ownerMode?: string;
 }
 
 const NODE_COLORS: Record<string, string> = { person: "#3b82f6", entity: "#8b5cf6", building: "#6b7280" };
@@ -49,7 +50,7 @@ function gradeBadge(g: string | undefined) {
   return cls;
 }
 
-export default function OwnerNetwork({ centerName, initialSelectedId, comparisons }: Props) {
+export default function OwnerNetwork({ centerName, initialSelectedId, comparisons, ownerMode }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<any>(null);
   const fitRef = useRef<() => void>(() => {});
@@ -235,7 +236,7 @@ export default function OwnerNetwork({ centerName, initialSelectedId, comparison
   if (!data) return null;
 
   // Build back-to URL params for building links
-  const ownerBackParams = `from_owner=${encodeURIComponent(centerName)}${selectedNode ? `&network_node=${encodeURIComponent(selectedNode.id)}` : ""}`;
+  const ownerBackParams = `from_owner=${encodeURIComponent(centerName)}${selectedNode ? `&network_node=${encodeURIComponent(selectedNode.id)}` : ""}${ownerMode ? `&owner_mode=${encodeURIComponent(ownerMode)}` : ""}`;
 
   return (
     <div>

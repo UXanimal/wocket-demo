@@ -242,6 +242,7 @@ function BuildingPage() {
   const addrParam = searchParams.get("addr") || "";
   const fromOwner = searchParams.get("from_owner") || "";
   const networkNode = searchParams.get("network_node") || "";
+  const ownerMode = searchParams.get("owner_mode") || "";
   
   // Build query string to preserve across navigation
   const qs = new URLSearchParams();
@@ -334,7 +335,7 @@ function BuildingPage() {
       <main className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-3 md:space-y-4">
         {/* Back to owner link (when navigated from network) */}
         {fromOwner && (
-          <Link href={`/owner/${encodeURIComponent(fromOwner)}${networkNode ? `?selected=${encodeURIComponent(networkNode)}` : ""}#network`} className="text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1">
+          <Link href={`/owner/${encodeURIComponent(fromOwner)}?${ownerMode ? `mode=${encodeURIComponent(ownerMode)}&` : ""}${networkNode ? `selected=${encodeURIComponent(networkNode)}` : ""}#network`} className="text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1">
             ← Back to {decodeURIComponent(fromOwner)}
           </Link>
         )}
