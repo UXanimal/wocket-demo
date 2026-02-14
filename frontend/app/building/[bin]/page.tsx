@@ -685,7 +685,7 @@ function BuildingPage() {
                 work_type: p.work_type, 
                 risk_tier: p.risk_tier || existing?.risk_tier || 'none',
                 signed_off: p.signed_off ?? existing?.signed_off,
-                no_final_inspection: existing?.no_final_inspection || false,
+                no_final_inspection: existing?.no_final_inspection || (p.signed_off === false && (p.risk_tier === 'critical' || p.risk_tier === 'warning')),
                 is_unit_match: existing?.is_unit_match || false,
               });
             });
