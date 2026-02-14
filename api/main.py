@@ -1261,9 +1261,15 @@ def get_all_permits(
     # Sort
     RISK_ORDER = {'critical': 0, 'warning': 1, 'active': 2, 'none': 3, 'clear': 4}
     if sort == "risk":
-        all_rows.sort(key=lambda r: (RISK_ORDER.get(r.get('risk_tier', 'none'), 3), r.get('latest_action_date') is None, r.get('latest_action_date') or ''), reverse=False)
-        # Within same risk tier, sort by date desc
-        # The above puts critical first; for date within tier we want desc
+        def inspect_order(r):
+            nfi = r.get('no_final_inspection', False)
+            so = r.get('signed_off', False)
+            rt = r.get('risk_tier', 'none')
+            if nfi and not so: return 0
+            if not so and rt in ('active', 'watch'): return 1
+            if not so: return 2
+            return 3
+        all_rows.sort(key=lambda r: (inspect_order(r), RISK_ORDER.get(r.get('risk_tier', 'none'), 3), r.get('latest_action_date') is None, r.get('latest_action_date') or ''), reverse=False)
     else:
         sort_col = sort if sort in ALLOWED_PERMIT_SORT else "latest_action_date"
         reverse = order.lower() != "asc"
