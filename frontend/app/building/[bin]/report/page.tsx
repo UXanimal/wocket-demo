@@ -30,7 +30,7 @@ const DEFAULT_CONFIG: ReportConfig = {
   includeSafety: true,
   includeCoo: true,
   includeOwnership: true,
-  includeAiSummary: false,
+  includeAiSummary: true,
   onlyOpen: true,
   dateFrom: "",
   dateTo: "",
@@ -412,7 +412,7 @@ function ReportPage() {
             <div style={{ lineHeight: "2" }}>
               <div><span style={{ fontWeight: 600 }}>Status:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.co_status || "Unknown"}</span></div>
               {b.latest_tco_date && <div><span style={{ fontWeight: 600 }}>Latest TCO Date:</span> {fmtDate(b.latest_tco_date)}</div>}
-              <div><span style={{ fontWeight: 600 }}>TCO Expired:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.tco_expired ? "YES" : "No"}</span></div>
+              {b.co_status === "TCO" && <div><span style={{ fontWeight: 600 }}>TCO Expired:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.tco_expired ? "YES" : "No"}</span></div>}
               {(data.unsigned_jobs || []).length > 0 && (
                 <div><span style={{ fontWeight: 600 }}>Unsigned Major Jobs:</span> {(data.unsigned_jobs || []).length} (A1/NB jobs without final signoff)</div>
               )}

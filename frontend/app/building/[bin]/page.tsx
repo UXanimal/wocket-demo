@@ -380,8 +380,8 @@ function BuildingPage() {
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
             <div><span className="text-gray-500">C of O Status</span><div className={`font-medium ${b.tco_expired ? "text-red-600" : "text-green-600"}`}>{b.co_status || "—"}</div></div>
-            <div><span className="text-gray-500">Latest TCO Date</span><div className="font-medium">{formatDate(b.latest_tco_date)}</div></div>
-            <div><span className="text-gray-500">TCO Expired</span><div className={`font-medium ${b.tco_expired ? "text-red-600" : ""}`}>{b.tco_expired ? "Yes" : "No"}</div></div>
+            {b.co_status === "TCO" && <div><span className="text-gray-500">Latest TCO Date</span><div className="font-medium">{formatDate(b.latest_tco_date)}</div></div>}
+            {b.co_status === "TCO" && <div><span className="text-gray-500">TCO Expired</span><div className={`font-medium ${b.tco_expired ? "text-red-600" : ""}`}>{b.tco_expired ? "Yes" : "No"}</div></div>}
             <div><span className="text-gray-500">Unsigned A1/NB Jobs</span><div className={`font-medium ${unsignedJobs.length > 0 ? "text-orange-600" : ""}`}>{unsignedJobs.length}</div></div>
           </div>
           {coRecords.length > 0 && (
