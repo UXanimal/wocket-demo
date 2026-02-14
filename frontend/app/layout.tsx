@@ -12,8 +12,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Wocket — NYC Public Apartment Data",
-  description: "Get the facts about the apartment or building you live in",
+  title: "Wocket — NYC Building Safety Data",
+  description: "Everything about your NYC building — violations, permits, C of O status, and more. DOB · HPD · ECB — all in one place.",
+  openGraph: {
+    title: "Wocket — NYC Building Safety Data",
+    description: "Everything about your NYC building — violations, permits, C of O status, and more.",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "Wocket — NYC Building Safety Data" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Wocket — NYC Building Safety Data",
+    description: "Everything about your NYC building — violations, permits, C of O status, and more.",
+    images: ["/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
