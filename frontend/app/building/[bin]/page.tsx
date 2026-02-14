@@ -690,7 +690,14 @@ function BuildingPage() {
               });
             });
             const allJobs = Array.from(byJob.values());
-            const sorted = allJobs.sort((a, b) => (RISK_ORDER[a.risk_tier] ?? 3) - (RISK_ORDER[b.risk_tier] ?? 3));
+            // Sort by inspection status: no final inspection first, then pending, then signed off
+            const inspectOrder = (j: any) => {
+              if (j.no_final_inspection && !j.signed_off) return 0;
+              if (!j.signed_off && (j.risk_tier === 'active' || j.risk_tier === 'watch')) return 1;
+              if (!j.signed_off) return 2;
+              return 3;
+            };
+            const sorted = allJobs.sort((a, b) => inspectOrder(a) - inspectOrder(b) || (RISK_ORDER[a.risk_tier] ?? 3) - (RISK_ORDER[b.risk_tier] ?? 3));
             return (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
