@@ -14,6 +14,7 @@ interface ReportConfig {
   includeSafety: boolean;
   includeCoo: boolean;
   includeOwnership: boolean;
+  includeAiSummary: boolean;
   onlyOpen: boolean;
   dateFrom: string;
   dateTo: string;
@@ -29,11 +30,33 @@ const DEFAULT_CONFIG: ReportConfig = {
   includeSafety: true,
   includeCoo: true,
   includeOwnership: true,
+  includeAiSummary: false,
   onlyOpen: true,
   dateFrom: "",
   dateTo: "",
   apartmentFilter: "",
 };
+
+// ─── Print & Legal Document Styles ───────────────────────
+
+const legalStyles = `
+  @media print {
+    body { margin: 0; padding: 0; }
+    .print\\:hidden { display: none !important; }
+    .report-body {
+      font-size: 12pt !important;
+      line-height: 2 !important;
+      max-width: none !important;
+      padding: 0.75in 1in !important;
+    }
+    .report-body table {
+      font-size: 9pt !important;
+      line-height: 1.3 !important;
+    }
+    .report-body section { break-inside: avoid; }
+    .report-footer { break-inside: avoid; }
+  }
+`;
 
 // ─── Helpers ─────────────────────────────────────────────
 
@@ -63,7 +86,7 @@ function fmtDays(days: number | null) {
 }
 
 function inDateRange(dateStr: string | null, from: string, to: string): boolean {
-  if (!dateStr) return true; // include items with no date
+  if (!dateStr) return true;
   if (!from && !to) return true;
   try {
     const d = new Date(dateStr).getTime();
@@ -71,6 +94,10 @@ function inDateRange(dateStr: string | null, from: string, to: string): boolean 
     if (to && d > new Date(to + "T23:59:59").getTime()) return false;
     return true;
   } catch { return true; }
+}
+
+function fmtFormalDate(date: Date): string {
+  return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
 // ─── Report Page ─────────────────────────────────────────
@@ -107,8 +134,9 @@ function ReportPage() {
 
   const b = data.building;
   const address = addrParam || b.address;
-  const generatedDate = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-  const generatedTime = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const now = new Date();
+  const generatedDate = fmtFormalDate(now);
+  const generatedTime = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   // ─── Filter data based on config ───
   const filterByDate = (items: any[], dateKey: string) => {
@@ -152,15 +180,69 @@ function ReportPage() {
   const coRecords = config.includeCoo ? (data.co_records || []) : [];
   const contacts = config.includeOwnership ? (data.contacts || []) : [];
 
-  // For litigations: if onlyOpen is true but none are open, show all (they're historically important)
   const displayLitigations = config.includeLitigations
     ? (config.onlyOpen && litigations.length === 0 ? filterByDate((data as any).litigations || [], "caseopendate") : litigations)
     : [];
 
   const totalItems = hpdViolations.length + ecbViolations.length + complaints.length + permits.length + displayLitigations.length + safetyViolations.length;
 
+  // ─── Class C violations count ───
+  const classCCount = hpdViolations.filter((v: any) => (v.class || "").toUpperCase() === "C").length;
+
+  // ─── Legal Summary Builder ───
+  function buildLegalSummary(): string {
+    const parts: string[] = [];
+
+    // Opening
+    const violationTypes: string[] = [];
+    if (config.includeHpd && hpdViolations.length > 0) violationTypes.push(`${hpdViolations.length} HPD housing maintenance code violation${hpdViolations.length !== 1 ? "s" : ""}`);
+    if (config.includeEcb && ecbViolations.length > 0) violationTypes.push(`${ecbViolations.length} DOB/ECB violation${ecbViolations.length !== 1 ? "s" : ""}`);
+    if (config.includeSafety && safetyViolations.length > 0) violationTypes.push(`${safetyViolations.length} DOB safety violation${safetyViolations.length !== 1 ? "s" : ""}`);
+    if (config.includeComplaints && complaints.length > 0) violationTypes.push(`${complaints.length} DOB complaint${complaints.length !== 1 ? "s" : ""}`);
+    if (config.includePermits && permits.length > 0) violationTypes.push(`${permits.length} uninspected or problematic permit${permits.length !== 1 ? "s" : ""}`);
+    if (config.includeLitigations && displayLitigations.length > 0) violationTypes.push(`${displayLitigations.length} HPD litigation${displayLitigations.length !== 1 ? "s" : ""}`);
+
+    if (violationTypes.length > 0) {
+      const joined = violationTypes.length <= 2
+        ? violationTypes.join(" and ")
+        : violationTypes.slice(0, -1).join(", ") + ", and " + violationTypes[violationTypes.length - 1];
+      parts.push(`This report documents ${joined} recorded against the premises located at ${address} (BIN: ${b.bin || bin}).`);
+    } else {
+      parts.push(`This report presents the building condition record for the premises located at ${address} (BIN: ${b.bin || bin}).`);
+    }
+
+    // Data sources
+    parts.push("All data herein is derived from official records maintained by the New York City Department of Buildings (DOB), the Department of Housing Preservation and Development (HPD), and published via NYC Open Data (data.cityofnewyork.us).");
+
+    // Date range note
+    if (config.onlyOpen) {
+      parts.push("This report is limited to currently open or active items" + (config.dateFrom || config.dateTo ? `, within the date range ${config.dateFrom || "earliest available"} through ${config.dateTo || "present"}` : "") + ".");
+    }
+
+    // TCO
+    if (config.includeCoo && b.tco_expired) {
+      parts.push("Notably, the building's Temporary Certificate of Occupancy has expired. Under New York Multiple Dwelling Law §301, a multiple dwelling may not be occupied without a valid Certificate of Occupancy, and the absence thereof may constitute a significant code violation relevant to habitability determinations.");
+    }
+
+    // Class C
+    if (config.includeHpd && classCCount > 0) {
+      parts.push(`The record includes ${classCCount} Class C (immediately hazardous) violation${classCCount !== 1 ? "s" : ""}. Pursuant to New York City Housing Maintenance Code §27-2115, Class C violations require correction within twenty-four (24) hours of placement.`);
+    }
+
+    // Apartment filter
+    if (config.apartmentFilter) {
+      parts.push(`This report has been filtered to records pertaining to Apartment ${config.apartmentFilter}.`);
+    }
+
+    parts.push("The complete record follows below.");
+
+    return parts.join(" ");
+  }
+
   return (
     <div className="min-h-screen bg-white">
+      <style dangerouslySetInnerHTML={{ __html: legalStyles }} />
+
       {/* Screen-only controls */}
       <div className="print:hidden bg-gray-50 border-b border-gray-200 px-4 py-3 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -198,6 +280,7 @@ function ReportPage() {
                 { key: "includeSafety", label: "Safety Violations" },
                 { key: "includeCoo", label: "Certificate of Occupancy" },
                 { key: "includeOwnership", label: "Ownership" },
+                { key: "includeAiSummary", label: "AI Summary" },
               ].map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                   <input
@@ -260,66 +343,80 @@ function ReportPage() {
       </div>
 
       {/* ─── Printable Report ─── */}
-      <div className="max-w-4xl mx-auto px-6 py-8 print:px-0 print:py-0 print:max-w-none">
-        {/* Report Header */}
-        <div className="border-b-2 border-gray-900 pb-4 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">Building Condition Report</h1>
-          <div className="mt-2 grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
-            <div><span className="font-semibold">Address:</span> {address}</div>
-            <div><span className="font-semibold">BIN:</span> {b.bin || bin}</div>
-            <div><span className="font-semibold">Block:</span> {b.block}  <span className="font-semibold ml-3">Lot:</span> {b.lot}</div>
-            <div><span className="font-semibold">Borough:</span> {b.borough}</div>
-            {config.apartmentFilter && <div><span className="font-semibold">Apartment:</span> {config.apartmentFilter}</div>}
-            <div><span className="font-semibold">Report Generated:</span> {generatedDate} at {generatedTime}</div>
+      <div
+        className="report-body max-w-4xl mx-auto px-6 py-8 print:px-0 print:py-0 print:max-w-none"
+        style={{
+          fontFamily: "'Times New Roman', Georgia, serif",
+          fontSize: "12pt",
+          lineHeight: "2",
+        }}
+      >
+        {/* Report Header — Legal Document Caption */}
+        <div className="border-b-2 border-gray-900 pb-4 mb-6" style={{ textAlign: "center" }}>
+          <h1 style={{ fontSize: "16pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
+            {address}
+          </h1>
+          <div style={{ fontSize: "14pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>
+            Building Condition Report
           </div>
-          {b.owner_name && config.includeOwnership && (
-            <div className="mt-2 text-sm"><span className="font-semibold">Registered Owner (HPD):</span> {b.owner_name}</div>
-          )}
+          <div style={{ fontSize: "11pt", lineHeight: "1.6" }}>
+            <div>BIN: {b.bin || bin} &nbsp;|&nbsp; Block: {b.block} &nbsp;|&nbsp; Lot: {b.lot} &nbsp;|&nbsp; Borough: {b.borough}</div>
+            {config.apartmentFilter && <div>Apartment: {config.apartmentFilter}</div>}
+            {b.owner_name && config.includeOwnership && <div>Registered Owner (HPD): {b.owner_name}</div>}
+            <div style={{ marginTop: "4px" }}>Report Generated: {generatedDate} at {generatedTime}</div>
+          </div>
         </div>
 
-        {/* Report Summary */}
-        <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4 print:bg-white print:border-gray-300">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Summary</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-            {config.includeHpd && <div>HPD Violations: <strong>{hpdViolations.length}</strong></div>}
-            {config.includeEcb && <div>DOB/ECB Violations: <strong>{ecbViolations.length}</strong></div>}
-            {config.includeComplaints && <div>DOB Complaints: <strong>{complaints.length}</strong></div>}
-            {config.includePermits && <div>Permits (uninspected): <strong>{permits.length}</strong></div>}
-            {config.includeLitigations && <div>HPD Litigations: <strong>{displayLitigations.length}</strong></div>}
-            {config.includeSafety && <div>Safety Violations: <strong>{safetyViolations.length}</strong></div>}
-            {config.includeCoo && <div>C of O Status: <strong className={b.tco_expired ? "text-red-600" : ""}>{b.tco_expired ? "EXPIRED TCO" : b.co_status || "Unknown"}</strong></div>}
-          </div>
-          {config.onlyOpen && <div className="mt-2 text-xs text-gray-500 italic">Showing open/active items only{config.dateFrom || config.dateTo ? ` • Date range: ${config.dateFrom || "any"} to ${config.dateTo || "present"}` : ""}</div>}
+        {/* Report Summary — Legal Brief Style */}
+        <div className="mb-6" style={{ lineHeight: "2" }}>
+          <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
+            Summary
+          </h2>
+          <p style={{ textIndent: "2em", marginBottom: "0" }}>
+            {buildLegalSummary()}
+          </p>
         </div>
+
+        {/* AI Summary (hidden by default) */}
+        {config.includeAiSummary && data.ai_summary && (
+          <div className="mb-6" style={{ lineHeight: "2" }}>
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
+              AI-Generated Analysis
+            </h2>
+            <p style={{ textIndent: "2em" }}>{data.ai_summary}</p>
+          </div>
+        )}
 
         {/* Certificate of Occupancy */}
         {config.includeCoo && (
           <section className="mb-6 break-inside-avoid">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">Certificate of Occupancy</h2>
-            <div className="text-sm space-y-1">
-              <div><span className="font-semibold">Status:</span> <span className={b.tco_expired ? "text-red-600 font-semibold" : ""}>{b.co_status || "Unknown"}</span></div>
-              {b.latest_tco_date && <div><span className="font-semibold">Latest TCO Date:</span> {fmtDate(b.latest_tco_date)}</div>}
-              <div><span className="font-semibold">TCO Expired:</span> <span className={b.tco_expired ? "text-red-600 font-semibold" : ""}>{b.tco_expired ? "YES" : "No"}</span></div>
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
+              Certificate of Occupancy
+            </h2>
+            <div style={{ lineHeight: "2" }}>
+              <div><span style={{ fontWeight: 600 }}>Status:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.co_status || "Unknown"}</span></div>
+              {b.latest_tco_date && <div><span style={{ fontWeight: 600 }}>Latest TCO Date:</span> {fmtDate(b.latest_tco_date)}</div>}
+              <div><span style={{ fontWeight: 600 }}>TCO Expired:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.tco_expired ? "YES" : "No"}</span></div>
               {(data.unsigned_jobs || []).length > 0 && (
-                <div><span className="font-semibold">Unsigned Major Jobs:</span> {(data.unsigned_jobs || []).length} (A1/NB jobs without final signoff)</div>
+                <div><span style={{ fontWeight: 600 }}>Unsigned Major Jobs:</span> {(data.unsigned_jobs || []).length} (A1/NB jobs without final signoff)</div>
               )}
               {b.tco_expired && (
-                <div className="mt-2 text-xs text-gray-600 italic border-l-2 border-gray-300 pl-3">
-                  Note: Under NYC Multiple Dwelling Law § 301, a building without a valid Certificate of Occupancy may not be legally occupied. See Kozak v. Kushner Village LLC (App. Div. 1st Dept., 2024).
+                <div style={{ marginTop: "8px", borderLeft: "2px solid #d1d5db", paddingLeft: "12px", fontSize: "11pt", fontStyle: "italic", color: "#4b5563" }}>
+                  Note: Under NYC Multiple Dwelling Law § 301, a building without a valid Certificate of Occupancy may not be legally occupied.
                 </div>
               )}
             </div>
-            <div className="mt-1 text-[10px] text-gray-400">Source: NYC Dept. of Buildings — Certificates of Occupancy (via NYC Open Data, dataset bs8b-p36w)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC Dept. of Buildings — Certificates of Occupancy (via NYC Open Data, dataset bs8b-p36w)</div>
           </section>
         )}
 
         {/* HPD Violations */}
         {config.includeHpd && hpdViolations.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
               HPD Violations ({hpdViolations.length})
             </h2>
-            <table className="w-full text-xs border-collapse">
+            <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
               <thead>
                 <tr className="border-b border-gray-300 text-left">
                   <th className="pb-1 pr-2 font-semibold">ID</th>
@@ -348,17 +445,17 @@ function ReportPage() {
                 })}
               </tbody>
             </table>
-            <div className="mt-1 text-[10px] text-gray-400">Source: NYC HPD — Housing Maintenance Code Violations (via NYC Open Data, dataset wvxf-dwi5)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC HPD — Housing Maintenance Code Violations (via NYC Open Data, dataset wvxf-dwi5)</div>
           </section>
         )}
 
         {/* ECB Violations */}
         {config.includeEcb && ecbViolations.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
               DOB/ECB Violations ({ecbViolations.length})
             </h2>
-            <table className="w-full text-xs border-collapse">
+            <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
               <thead>
                 <tr className="border-b border-gray-300 text-left">
                   <th className="pb-1 pr-2 font-semibold">Number</th>
@@ -380,17 +477,17 @@ function ReportPage() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-1 text-[10px] text-gray-400">Source: NYC DOB — ECB Violations (via NYC Open Data, dataset 6bgk-3dad)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — ECB Violations (via NYC Open Data, dataset 6bgk-3dad)</div>
           </section>
         )}
 
         {/* DOB Safety Violations */}
         {config.includeSafety && safetyViolations.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
               DOB Safety Violations ({safetyViolations.length})
             </h2>
-            <table className="w-full text-xs border-collapse">
+            <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
               <thead>
                 <tr className="border-b border-gray-300 text-left">
                   <th className="pb-1 pr-2 font-semibold">Number</th>
@@ -412,17 +509,17 @@ function ReportPage() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-1 text-[10px] text-gray-400">Source: NYC DOB — Safety Violations</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — Safety Violations</div>
           </section>
         )}
 
         {/* DOB Complaints */}
         {config.includeComplaints && complaints.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
               DOB Complaints ({complaints.length})
             </h2>
-            <table className="w-full text-xs border-collapse">
+            <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
               <thead>
                 <tr className="border-b border-gray-300 text-left">
                   <th className="pb-1 pr-2 font-semibold">Number</th>
@@ -444,17 +541,17 @@ function ReportPage() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-1 text-[10px] text-gray-400">Source: NYC DOB — Complaints Received (via NYC Open Data, dataset eabe-havv)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — Complaints Received (via NYC Open Data, dataset eabe-havv)</div>
           </section>
         )}
 
         {/* Permits */}
         {config.includePermits && permits.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
               Permits — Uninspected / Problematic ({permits.length})
             </h2>
-            <table className="w-full text-xs border-collapse">
+            <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
               <thead>
                 <tr className="border-b border-gray-300 text-left">
                   <th className="pb-1 pr-2 font-semibold">Job #</th>
@@ -481,17 +578,17 @@ function ReportPage() {
                 })}
               </tbody>
             </table>
-            <div className="mt-1 text-[10px] text-gray-400">Source: NYC DOB — BIS Job Filings (via NYC Open Data, dataset ic3t-wcy2) and DOB NOW Permits (dataset rbx6-tga4)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — BIS Job Filings (via NYC Open Data, dataset ic3t-wcy2) and DOB NOW Permits (dataset rbx6-tga4)</div>
           </section>
         )}
 
         {/* HPD Litigations */}
         {config.includeLitigations && displayLitigations.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
               HPD Litigations ({displayLitigations.length})
             </h2>
-            <table className="w-full text-xs border-collapse">
+            <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
               <thead>
                 <tr className="border-b border-gray-300 text-left">
                   <th className="pb-1 pr-2 font-semibold">ID</th>
@@ -515,15 +612,17 @@ function ReportPage() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-1 text-[10px] text-gray-400">Source: NYC HPD — Litigations (via NYC Open Data, dataset 59kj-x8nc)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC HPD — Litigations (via NYC Open Data, dataset 59kj-x8nc)</div>
           </section>
         )}
 
         {/* Ownership */}
         {config.includeOwnership && contacts.length > 0 && (
           <section className="mb-6 break-inside-avoid">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide border-b border-gray-300 pb-1 mb-3">Ownership & Management</h2>
-            <table className="w-full text-xs border-collapse">
+            <h2 style={{ fontSize: "12pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #d1d5db", paddingBottom: "4px", marginBottom: "8px" }}>
+              Ownership & Management
+            </h2>
+            <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
               <thead>
                 <tr className="border-b border-gray-300 text-left">
                   <th className="pb-1 pr-2 font-semibold">Role</th>
@@ -549,24 +648,24 @@ function ReportPage() {
                 })}
               </tbody>
             </table>
-            <div className="mt-1 text-[10px] text-gray-400">Source: NYC HPD — Registration Contacts (via NYC Open Data, dataset feu5-w2e2)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC HPD — Registration Contacts (via NYC Open Data, dataset feu5-w2e2)</div>
           </section>
         )}
 
         {/* Footer / Disclaimer */}
-        <div className="mt-8 pt-4 border-t-2 border-gray-900 text-xs text-gray-500 space-y-2">
-          <p className="font-semibold text-gray-700">Data Sources & Disclaimer</p>
-          <p>
+        <div className="report-footer" style={{ marginTop: "32px", paddingTop: "16px", borderTop: "2px solid #111827", fontSize: "10pt", color: "#6b7280", lineHeight: "1.6" }}>
+          <p style={{ fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Data Sources & Disclaimer</p>
+          <p style={{ marginBottom: "8px" }}>
             All data in this report is sourced from publicly available NYC government databases including the NYC Department of Buildings (DOB),
             the NYC Department of Housing Preservation and Development (HPD), and NYC Open Data (data.cityofnewyork.us).
             Data is updated periodically and may not reflect the most recent changes.
           </p>
-          <p>
+          <p style={{ marginBottom: "8px" }}>
             This report is provided for informational purposes. While sourced from official city records,
             it should be independently verified. Under CPLR § 4520 and NYC Admin Code, official records
             from city agencies are generally admissible as evidence in Housing Court proceedings.
           </p>
-          <p className="text-[10px] text-gray-400">
+          <p style={{ fontSize: "8pt", color: "#9ca3af" }}>
             Generated by Wocket · {generatedDate} at {generatedTime} · {totalItems} items included
           </p>
         </div>
