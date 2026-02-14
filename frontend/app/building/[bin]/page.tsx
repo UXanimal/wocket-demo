@@ -716,9 +716,17 @@ function BuildingPage() {
                       <td className="py-2 pr-2 text-xs">{v.severity || "—"}</td>
                       <td className="py-2 pr-2 text-xs">{formatDate(v.issue_date)}</td>
                       <td className="py-2 pr-2 text-xs">{v.ecb_violation_status}</td>
-                      <td className="py-2 pr-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate relative">
+                      <td className="py-2 pr-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs relative">
                         <span className="truncate block pr-14">{v.violation_description}</span>
-                        {v.is_unit_match && <span className="absolute right-1 top-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Apt {apt}</span>}
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {(v.tags || []).map((t: any) => (
+                            <span key={t.id} className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{t.icon} {t.label}</span>
+                          ))}
+                          {(v.extracted_apartments || []).length > 0 && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">🏠 {(v.extracted_apartments || []).join(", ")}</span>
+                          )}
+                        </div>
+                        {v.is_unit_match && <span className="absolute right-1 top-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Apt {apt}</span>}
                       </td>
                       <td className="py-2 text-xs">{fmt$(v.penality_imposed)}</td>
                     </tr>
@@ -1199,6 +1207,8 @@ function BuildingPage() {
             { label: "Balance Due", value: fmt$(drawerItem.balance_due) },
             { label: "Hearing Status", value: drawerItem.hearing_status },
             { label: "Description", value: drawerItem.violation_description, full: true },
+            ...(drawerItem.tags && drawerItem.tags.length > 0 ? [{ label: "Hazard Tags", value: drawerItem.tags.map((t: any) => `${t.icon} ${t.label}`).join("  ·  "), full: true }] : []),
+            ...(drawerItem.extracted_apartments && drawerItem.extracted_apartments.length > 0 ? [{ label: "Apartments Mentioned", value: drawerItem.extracted_apartments.join(", ") }] : []),
           ]}
         />
       )}
