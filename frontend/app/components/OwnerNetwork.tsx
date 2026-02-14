@@ -283,32 +283,31 @@ export default function OwnerNetwork({ centerName, initialSelectedId }: Props) {
         </div>
       </div>
 
-      {/* Expandable building list below graph (like violation/complaint detail panels) */}
+      {/* Slide-in drawer for building list */}
       {selectedNode && sidebarBuildings.length > 0 && (
-        <div className="mt-4 bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none overflow-hidden">
-          <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-3">
-              <span className="text-gray-400 dark:text-gray-500 text-sm">▼</span>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedNode.label}</h3>
-              <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full font-medium">
-                {sidebarBuildings.length} building{sidebarBuildings.length !== 1 ? "s" : ""}
-              </span>
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => { setSelectedNode(null); setSidebarBuildings([]); }} />
+          <div className="relative w-full max-w-lg md:max-w-xl bg-white dark:bg-[#1a1b2e] shadow-2xl dark:shadow-none overflow-y-auto animate-slide-in-right max-md:max-w-full max-md:rounded-t-2xl max-md:mt-16">
+            {/* Header */}
+            <div className="sticky top-0 bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 flex items-center justify-between z-10">
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold font-nunito text-gray-900 dark:text-gray-100 truncate">{selectedNode.label}</h2>
+                <div className="text-xs text-gray-400 dark:text-gray-500">
+                  {selectedNode.type === "person" ? selectedNode.roles?.join(", ") : "Entity"} · {sidebarBuildings.length} building{sidebarBuildings.length !== 1 ? "s" : ""}
+                </div>
+              </div>
+              <button onClick={() => { setSelectedNode(null); setSidebarBuildings([]); }} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none shrink-0 ml-2">×</button>
             </div>
-            <button onClick={() => { setSelectedNode(null); setSidebarBuildings([]); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg leading-none">×</button>
-          </div>
-          <div className="px-4 md:px-6 pb-4 md:pb-6">
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 mb-3">
-              {selectedNode.type === "person" ? selectedNode.roles?.join(", ") : "Entity"} — connected buildings sorted by open Class C violations
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {/* Building list */}
+            <div className="px-4 md:px-6 py-3">
               {sidebarBuildings.map((b) => {
                 const bin = b.id.replace("building:", "");
                 return (
-                  <Link key={bin} href={`/building/${bin}?${ownerBackParams}`} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
-                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${gradeBadge(b.grade)}`}>{b.grade || "?"}</span>
+                  <Link key={bin} href={`/building/${bin}?${ownerBackParams}`} className="flex items-center gap-3 px-3 py-3 -mx-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0">
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${gradeBadge(b.grade)}`}>{b.grade || "?"}</span>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{b.address || b.label}</div>
-                      <div className="text-xs text-gray-400">{b.borough}{(b.open_class_c || 0) > 0 ? ` · ${b.open_class_c} Class C` : ""}</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">{b.borough}{(b.open_class_c || 0) > 0 ? ` · ${b.open_class_c} open Class C` : ""}</div>
                     </div>
                   </Link>
                 );
