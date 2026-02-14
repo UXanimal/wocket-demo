@@ -149,6 +149,8 @@ function ReportPage() {
 
   const b = data.building;
   const address = addrParam || b.address;
+  const allAliases = (b.aliases || "").split("; ").map((a: string) => a.trim().replace(/\s+/g, " ")).filter(Boolean);
+  const otherAddresses = [...new Set([b.address, ...allAliases].filter((a: string) => a && a !== address))];
   const now = new Date();
   const generatedDate = fmtFormalDate(now);
   const generatedTime = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -372,6 +374,11 @@ function ReportPage() {
           <h1 style={{ fontSize: "16pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
             {address}, {b.borough ? b.borough.charAt(0) + b.borough.slice(1).toLowerCase() : ""}, New York
           </h1>
+          {otherAddresses.length > 0 && (
+            <div style={{ fontSize: "9pt", color: "#6b7280", marginBottom: "4px" }}>
+              Also known as: {otherAddresses.join(", ")}
+            </div>
+          )}
           <div style={{ fontSize: "14pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>
             Building Condition Report
           </div>
