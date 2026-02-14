@@ -458,7 +458,7 @@ function BuildingPage() {
                 const leadO = keywordCount(openOnly, ["lead", "lead-based"]);
                 return (
                   <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
-                    <span className="text-lg">🎨</span>
+                    <span className="text-lg">🧪</span>
                     <div><div className="text-xs text-gray-500 dark:text-gray-400">Lead Paint</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{leadAll} violations{leadO > 0 ? <span className="text-red-600 ml-1">({leadO} open)</span> : ""}</div></div>
                   </div>
                 );
