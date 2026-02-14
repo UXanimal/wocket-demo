@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import SearchBar from "../../components/SearchBar";
@@ -115,8 +115,8 @@ interface BuildingData {
 
 function Collapsible({ title, subtitle, children, defaultOpen = false, badge, id }: { title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode; id?: string }) {
   const [open, setOpen] = useState(defaultOpen);
-  const ref = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
     if (id && typeof window !== 'undefined' && window.location.hash === `#${id}`) {
       setOpen(true);
       setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
