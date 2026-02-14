@@ -113,7 +113,7 @@ interface BuildingData {
   detailed_permits: any[];
 }
 
-function Collapsible({ title, subtitle, children, defaultOpen = false, badge, id }: { title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode; id?: string }) {
+function Collapsible({ title, subtitle, children, defaultOpen = false, badge, id, glossary }: { title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode; id?: string; glossary?: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -129,7 +129,7 @@ function Collapsible({ title, subtitle, children, defaultOpen = false, badge, id
           <span className="text-gray-400 dark:text-gray-500 text-sm">{open ? "▼" : "▶"}</span>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
           {badge}
-          {subtitle && open && <p className="w-full text-xs text-gray-400 dark:text-gray-500 ml-7 -mt-1 text-left">{subtitle}</p>}
+          {subtitle && open && <p className="w-full text-xs text-gray-400 dark:text-gray-500 ml-7 -mt-1 text-left inline-flex items-center gap-1.5">{subtitle}{glossary && <span onClick={(e) => e.stopPropagation()}>{glossary}</span>}</p>}
         </div>
       </button>
       {open && <div className="px-4 md:px-6 pb-4 md:pb-6 border-t border-gray-100 dark:border-gray-800">{children}</div>}
@@ -451,6 +451,13 @@ function BuildingPage() {
           subtitle="Housing conditions found by HPD inspectors — heat, lead, pests, mold, fire safety, and more"
           defaultOpen={openC > 0}
           badge={openC > 0 ? <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">{openC} Class C</span> : undefined}
+          glossary={<CodeGlossary sections={[
+            { title: "Violation Classes", entries: [
+              { code: "C", label: "Immediately hazardous — must be corrected within 24 hours", color: "bg-red-100 text-red-700" },
+              { code: "B", label: "Hazardous — must be corrected within 30 days", color: "bg-orange-100 text-orange-700" },
+              { code: "A", label: "Non-hazardous — must be corrected within 90 days", color: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200" },
+            ]},
+          ]} />}
         >
           <div className="grid md:grid-cols-2 gap-6 mt-4">
             <div className="grid grid-cols-2 gap-4">
@@ -467,13 +474,6 @@ function BuildingPage() {
               <Callout label="Mold (open)" value={mold} warn={mold > 0} />
             </div>
           </div>
-          <CodeGlossary sections={[
-            { title: "Violation Classes", entries: [
-              { code: "C", label: "Immediately hazardous — must be corrected within 24 hours", color: "bg-red-100 text-red-700" },
-              { code: "B", label: "Hazardous — must be corrected within 30 days", color: "bg-orange-100 text-orange-700" },
-              { code: "A", label: "Non-hazardous — must be corrected within 90 days", color: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200" },
-            ]},
-          ]} />
           {openViolations.length > 0 && (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -517,18 +517,8 @@ function BuildingPage() {
         </Collapsible>
 
         {/* ECB Violations */}
-        <Collapsible title="DOB/ECB Violations" subtitle="Building code violations issued by the Dept. of Buildings — illegal work, no permits, stop work orders" badge={ecb.length > 0 ? <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium">{ecb.length}</span> : undefined}>
-          <div className="grid md:grid-cols-2 gap-6 mt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Stat label="Total ECB Violations" value={b.total_ecb_violations} />
-              <Stat label="Total ECB Penalties" value={fmt$(totalEcbPenalties)} color={totalEcbPenalties > 0 ? "text-red-600" : undefined} />
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-              <Callout label="Stop Work Orders" value={ecb.filter(v => (v.violation_description||"").toLowerCase().includes("stop work")).length} warn />
-              <Callout label="Unlicensed Contractor" value={ecb.filter(v => (v.violation_description||"").toLowerCase().includes("unlicensed")).length} warn />
-            </div>
-          </div>
-          <CodeGlossary sections={[
+        <Collapsible title="DOB/ECB Violations" subtitle="Building code violations issued by the Dept. of Buildings — illegal work, no permits, stop work orders" badge={ecb.length > 0 ? <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium">{ecb.length}</span> : undefined}
+          glossary={<CodeGlossary sections={[
             { title: "ECB Violation Status", entries: [
               { code: "DEFAULT", label: "Respondent failed to appear — default penalty imposed", color: "text-red-500" },
               { code: "RESOLVE", label: "Violation resolved or penalty paid" },
@@ -541,7 +531,18 @@ function BuildingPage() {
               { code: "Non-Hazardous", label: "Minor code violation with no immediate danger — e.g. missing signage, paperwork issues, minor maintenance." },
               { code: "Unknown", label: "Severity not yet classified by ECB" },
             ]},
-          ]} />
+          ]} />}
+        >
+          <div className="grid md:grid-cols-2 gap-6 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Stat label="Total ECB Violations" value={b.total_ecb_violations} />
+              <Stat label="Total ECB Penalties" value={fmt$(totalEcbPenalties)} color={totalEcbPenalties > 0 ? "text-red-600" : undefined} />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <Callout label="Stop Work Orders" value={ecb.filter(v => (v.violation_description||"").toLowerCase().includes("stop work")).length} warn />
+              <Callout label="Unlicensed Contractor" value={ecb.filter(v => (v.violation_description||"").toLowerCase().includes("unlicensed")).length} warn />
+            </div>
+          </div>
           {ecb.length > 0 && (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -584,27 +585,28 @@ function BuildingPage() {
           return (
           <Collapsible id="safety-violations" title="DOB Safety Violations" subtitle="Elevator, boiler, façade, and other safety device violations issued by DOB" badge={
             <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">{totalSafety}{activeSafety.length > 0 ? ` (${activeSafety.length} active)` : ''}</span>
-          }>
+          }
+          glossary={<CodeGlossary sections={[
+            { title: "Device Types", entries: [
+              { code: "ELEV", label: "Elevator — passenger or freight elevator systems" },
+              { code: "BOIL", label: "Boiler — heating boiler equipment" },
+              { code: "FACA", label: "Façade — exterior wall inspection (Local Law 11)" },
+              { code: "SPKR", label: "Sprinkler — fire sprinkler systems" },
+              { code: "STPK", label: "Standpipe — fire standpipe systems" },
+              { code: "COOL", label: "Cooling tower — Legionella risk equipment" },
+            ]},
+            { title: "Violation Status", entries: [
+              { code: "Active", label: "Violation is currently open and unresolved", color: "text-red-500" },
+              { code: "Resolve", label: "Violation has been resolved or corrected" },
+              { code: "Dismiss", label: "Violation was dismissed" },
+            ]},
+          ]} />}
+          >
             <div className="mt-4">
               <div className="flex items-center gap-3 mb-3">
                 {activeSafety.length > 0 && (
                   <Callout label="Active Safety Violations" value={activeSafety.length} warn />
                 )}
-                <CodeGlossary sections={[
-                  { title: "Device Types", entries: [
-                    { code: "ELEV", label: "Elevator — passenger or freight elevator systems" },
-                    { code: "BOIL", label: "Boiler — heating boiler equipment" },
-                    { code: "FACA", label: "Façade — exterior wall inspection (Local Law 11)" },
-                    { code: "SPKR", label: "Sprinkler — fire sprinkler systems" },
-                    { code: "STPK", label: "Standpipe — fire standpipe systems" },
-                    { code: "COOL", label: "Cooling tower — Legionella risk equipment" },
-                  ]},
-                  { title: "Violation Status", entries: [
-                    { code: "Active", label: "Violation is currently open and unresolved", color: "text-red-500" },
-                    { code: "Resolve", label: "Violation has been resolved or corrected" },
-                    { code: "Dismiss", label: "Violation was dismissed" },
-                  ]},
-                ]} />
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -636,6 +638,23 @@ function BuildingPage() {
           title="Permits & Construction"
           subtitle="Active and expired construction permits — plumbing, electrical, structural, and more"
           defaultOpen={criticalPermits.length > 0}
+          glossary={<CodeGlossary sections={[
+            { title: "Risk Tiers", entries: [
+              { code: "Critical", label: "High-risk work (plumbing, gas, sprinklers, structural) — uninspected 2+ years", color: "text-red-600" },
+              { code: "High", label: "High-risk work uninspected < 2 years, or any work uninspected 5+ years", color: "text-red-400" },
+              { code: "Warning", label: "Non-high-risk work uninspected 1–5 years", color: "text-orange-500" },
+              { code: "Low", label: "Uninspected less than 1 year", color: "text-yellow-500" },
+              { code: "Clear", label: "Signed off — final inspection completed", color: "text-green-500" },
+              { code: "None", label: "No work filings, active permits, or not yet expired", color: "text-gray-400" },
+            ]},
+            { title: "Job Types", entries: [
+              { code: "A1", label: "Alteration Type 1 — major structural change affecting use, egress, or occupancy" },
+              { code: "A2", label: "Alteration Type 2 — multiple work types, no change in use/egress/occupancy" },
+              { code: "A3", label: "Alteration Type 3 — single work type (e.g., plumbing only)" },
+              { code: "NB", label: "New Building — complete new construction" },
+              { code: "DM", label: "Demolition" },
+            ]},
+          ]} />}
           badge={<>
             {criticalPermits.length > 0 && <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium"><span className="inline-block w-1.5 h-1.5 rounded-full bg-red-600" />{criticalPermits.length} Critical</span>}
             {highPermits.length > 0 && <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium"><span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400" />{highPermits.length} High</span>}
@@ -657,23 +676,6 @@ function BuildingPage() {
               {noInspectionCount > 0 && <Callout label="BIS Permits — No Final Inspection" value={noInspectionCount} warn />}
             </div>
           </div>
-          <CodeGlossary sections={[
-            { title: "Risk Tiers", entries: [
-              { code: "Critical", label: "High-risk work (plumbing, gas, sprinklers, structural) — uninspected 2+ years", color: "text-red-600" },
-              { code: "High", label: "High-risk work uninspected < 2 years, or any work uninspected 5+ years", color: "text-red-400" },
-              { code: "Warning", label: "Non-high-risk work uninspected 1–5 years", color: "text-orange-500" },
-              { code: "Low", label: "Uninspected less than 1 year", color: "text-yellow-500" },
-              { code: "Clear", label: "Signed off — final inspection completed", color: "text-green-500" },
-              { code: "None", label: "No work filings, active permits, or not yet expired", color: "text-gray-400" },
-            ]},
-            { title: "Job Types", entries: [
-              { code: "A1", label: "Alteration Type 1 — major structural change affecting use, egress, or occupancy" },
-              { code: "A2", label: "Alteration Type 2 — multiple work types, no change in use/egress/occupancy" },
-              { code: "A3", label: "Alteration Type 3 — single work type (e.g., plumbing only)" },
-              { code: "NB", label: "New Building — complete new construction" },
-              { code: "DM", label: "Demolition" },
-            ]},
-          ]} />
           {(bisJobs.length > 0 || detailedPermits.length > 0) && (() => {
             const RISK_ORDER: Record<string, number> = { critical: 0, high: 1, warning: 2, low: 3, active: 4, none: 5, clear: 6 };
             const riskDisc = (tier: string) => {
@@ -763,27 +765,28 @@ function BuildingPage() {
           return (
           <Collapsible title="DOB Complaints" subtitle="Reports filed by tenants or the public about construction, unsafe conditions, or illegal building work (separate from HPD housing complaints)" badge={
             totalComplaints > 0 ? <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">{totalComplaints}</span> : undefined
-          }>
+          }
+          glossary={<CodeGlossary sections={[
+            { title: "Complaint Status", entries: [
+              { code: "ACTIVE", label: "Complaint is open and under investigation", color: "text-red-500" },
+              { code: "CLOSED", label: "Investigation complete or complaint resolved" },
+            ]},
+            { title: "Common Categories", entries: [
+              { code: "05", label: "Illegal conversion of building use" },
+              { code: "06", label: "Construction — illegal or non-permitted work" },
+              { code: "12", label: "Illegal/unsafe occupancy" },
+              { code: "31", label: "Certificate of Occupancy — missing or non-compliant" },
+              { code: "45", label: "Failure to maintain" },
+              { code: "49", label: "Scaffolding / sidewalk shed" },
+              { code: "83", label: "Stop work order violation" },
+            ]},
+          ]} />}
+          >
             <div className="mt-4">
               <div className="flex items-center gap-3 mb-3">
                 {openComplaints.length > 0 && (
                   <Callout label="Active Complaints" value={openComplaints.length} warn />
                 )}
-                <CodeGlossary sections={[
-                  { title: "Complaint Status", entries: [
-                    { code: "ACTIVE", label: "Complaint is open and under investigation", color: "text-red-500" },
-                    { code: "CLOSED", label: "Investigation complete or complaint resolved" },
-                  ]},
-                  { title: "Common Categories", entries: [
-                    { code: "05", label: "Illegal conversion of building use" },
-                    { code: "06", label: "Construction — illegal or non-permitted work" },
-                    { code: "12", label: "Illegal/unsafe occupancy" },
-                    { code: "31", label: "Certificate of Occupancy — missing or non-compliant" },
-                    { code: "45", label: "Failure to maintain" },
-                    { code: "49", label: "Scaffolding / sidewalk shed" },
-                    { code: "83", label: "Stop work order violation" },
-                  ]},
-                ]} />
               </div>
               {complaints.length > 0 ? (
                 <div className="overflow-x-auto">
@@ -831,6 +834,21 @@ function BuildingPage() {
               {openLit.length > 0 && <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">{openLit.length} Open</span>}
               <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full font-medium">{litigations.length} Total</span>
             </>}
+            glossary={<CodeGlossary sections={[
+              { title: "Case Types", entries: [
+                { code: "Heat and Hot Water", label: "HPD sued owner for failure to provide adequate heat or hot water" },
+                { code: "Tenant Action", label: "HPD brought action on behalf of tenants for unresolved violations" },
+                { code: "False Certification Non-Lead", label: "Owner falsely certified correction of non-lead violations", color: "text-red-500" },
+                { code: "False Certification Lead", label: "Owner falsely certified correction of lead paint violations", color: "text-red-500" },
+                { code: "Access Warrant - Non-Lead", label: "HPD obtained court order to access building for non-lead inspection" },
+                { code: "Access Warrant - Lead", label: "HPD obtained court order to access building for lead inspection" },
+                { code: "Comprehensive", label: "Broad action covering multiple violation categories" },
+              ]},
+              { title: "Case Judgement", entries: [
+                { code: "YES", label: "Court ruled against the owner — judgement entered" },
+                { code: "NO", label: "No judgement entered (case may be settled, dismissed, or ongoing)" },
+              ]},
+            ]} />}
           >
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
               <Stat label="Open Cases" value={openLit.length} color={openLit.length > 0 ? "text-red-600" : undefined} />
@@ -849,21 +867,6 @@ function BuildingPage() {
                 <Callout key={type} label={type} value={count} warn={openLit.some((l: any) => l.casetype === type)} />
               ))}
             </div>
-            <CodeGlossary sections={[
-              { title: "Case Types", entries: [
-                { code: "Heat and Hot Water", label: "HPD sued owner for failure to provide adequate heat or hot water" },
-                { code: "Tenant Action", label: "HPD brought action on behalf of tenants for unresolved violations" },
-                { code: "False Certification Non-Lead", label: "Owner falsely certified correction of non-lead violations", color: "text-red-500" },
-                { code: "False Certification Lead", label: "Owner falsely certified correction of lead paint violations", color: "text-red-500" },
-                { code: "Access Warrant - Non-Lead", label: "HPD obtained court order to access building for non-lead inspection" },
-                { code: "Access Warrant - Lead", label: "HPD obtained court order to access building for lead inspection" },
-                { code: "Comprehensive", label: "Broad action covering multiple violation categories" },
-              ]},
-              { title: "Case Judgement", entries: [
-                { code: "YES", label: "Court ruled against the owner — judgement entered" },
-                { code: "NO", label: "No judgement entered (case may be settled, dismissed, or ongoing)" },
-              ]},
-            ]} />
             {litigations.length > 0 && (
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full text-sm">
