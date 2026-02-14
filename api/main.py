@@ -1607,6 +1607,114 @@ def building_percentiles(bin_number: str):
         conn.close()
 
 
+###############################################################################
+# ML Predictions — Complaint Resolution Time
+###############################################################################
+
+import json
+import joblib
+import datetime
+
+ML_DIR = os.path.join(os.path.dirname(__file__), '..', 'ml')
+try:
+    resolution_model = joblib.load(os.path.join(ML_DIR, 'resolution_model.joblib'))
+    _le_category = joblib.load(os.path.join(ML_DIR, 'le_category.joblib'))
+    _le_borough = joblib.load(os.path.join(ML_DIR, 'le_borough.joblib'))
+    with open(os.path.join(ML_DIR, 'model_metadata.json')) as _f:
+        model_metadata = json.load(_f)
+    ML_AVAILABLE = True
+except Exception:
+    ML_AVAILABLE = False
+
+
+@app.get("/api/building/{bin_number}/predictions")
+def building_predictions(bin_number: str):
+    if not ML_AVAILABLE:
+        return {"predictions": None, "error": "Model not available"}
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cur.execute("SELECT borough, open_class_c, total_hpd_violations, ecb_penalties, tco_expired, unsigned_jobs FROM building_scores WHERE bin = %s", (bin_number,))
+        building = cur.fetchone()
+        if not building:
+            return {"predictions": None}
+
+        cur.execute("""
+            SELECT complaint_number, complaint_category, date_entered, status, category_description
+            FROM dob_complaints WHERE bin = %s AND status = 'ACTIVE'
+            ORDER BY date_entered DESC
+        """, (bin_number,))
+        active = cur.fetchall()
+
+        # Historical avg
+        cur.execute("""
+            SELECT ROUND(AVG(TO_DATE(disposition_date, 'MM/DD/YYYY') - TO_DATE(date_entered, 'MM/DD/YYYY'))) as avg_days,
+                   COUNT(*) as resolved_count
+            FROM dob_complaints
+            WHERE bin = %s AND disposition_date IS NOT NULL AND date_entered IS NOT NULL
+              AND disposition_date != '' AND date_entered != ''
+              AND disposition_date ~ '^[0-1][0-9]/[0-3][0-9]/[0-9]{4}$'
+              AND date_entered ~ '^[0-1][0-9]/[0-3][0-9]/[0-9]{4}$'
+              AND TO_DATE(disposition_date, 'MM/DD/YYYY') > TO_DATE(date_entered, 'MM/DD/YYYY')
+        """, (bin_number,))
+        history = cur.fetchone()
+
+        predictions = []
+        for complaint in active:
+            cat = str(complaint['complaint_category'])
+            if cat in _le_category.classes_:
+                cat_enc = _le_category.transform([cat])[0]
+            else:
+                cat_enc = 0
+
+            borough = str(building['borough'] or '')
+            if borough in _le_borough.classes_:
+                bor_enc = _le_borough.transform([borough])[0]
+            else:
+                bor_enc = 0
+
+            try:
+                filed = datetime.datetime.strptime(complaint['date_entered'], '%m/%d/%Y')
+                month = filed.month
+                dow = filed.weekday()
+                days_waiting = (datetime.date.today() - filed.date()).days
+            except Exception:
+                month, dow, days_waiting = 6, 2, 0
+
+            features = [[
+                cat_enc, bor_enc,
+                building['open_class_c'] or 0,
+                building['total_hpd_violations'] or 0,
+                float(building['ecb_penalties'] or 0),
+                1 if building['tco_expired'] else 0,
+                building['unsigned_jobs'] or 0,
+                month, dow
+            ]]
+
+            predicted_days = max(1, round(resolution_model.predict(features)[0]))
+
+            cat_desc = complaint.get('category_description') or COMPLAINT_CATEGORIES.get(cat, cat)
+            predictions.append({
+                'complaint_number': complaint['complaint_number'],
+                'category': cat_desc,
+                'date_entered': complaint['date_entered'],
+                'days_waiting': days_waiting,
+                'predicted_days': predicted_days,
+                'predicted_remaining': max(0, predicted_days - days_waiting),
+            })
+
+        return {
+            "predictions": predictions,
+            "building_avg_days": int(history['avg_days']) if history and history['avg_days'] else None,
+            "building_resolved_count": int(history['resolved_count']) if history else 0,
+            "model_accuracy": model_metadata.get('mae_days'),
+        }
+    finally:
+        cur.close()
+        conn.close()
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
