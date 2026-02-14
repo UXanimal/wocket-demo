@@ -173,6 +173,13 @@ function keywordCount(violations: any[], keywords: string[]) {
   }).length;
 }
 
+function keywordFilter(violations: any[], keywords: string[]) {
+  return violations.filter((v) => {
+    const desc = (v.novdescription || "").toLowerCase();
+    return keywords.some((k) => desc.includes(k));
+  });
+}
+
 function gradeColor(g: string | null) {
   if (!g) return "bg-gray-200 text-gray-700 dark:text-gray-200";
   if (g === "A") return "bg-green-500 text-white";
@@ -246,13 +253,13 @@ function BuildingPage() {
   const [error, setError] = useState("");
 
   // Detail drawer state
-  const [drawerType, setDrawerType] = useState<"hpd" | "ecb" | "permit" | "complaint" | "safety" | null>(null);
+  const [drawerType, setDrawerType] = useState<"hpd" | "ecb" | "permit" | "complaint" | "safety" | "litigation" | null>(null);
   const [drawerIdx, setDrawerIdx] = useState(-1);
   const [drawerData, setDrawerData] = useState<any[]>([]);
   const [mapTouched, setMapTouched] = useState(false);
   const drawerItem = drawerIdx >= 0 ? drawerData[drawerIdx] : null;
   const closeDrawer = () => { setDrawerType(null); setDrawerIdx(-1); };
-  const openDrawer = (type: "hpd" | "ecb" | "permit" | "complaint" | "safety", idx: number, items: any[]) => {
+  const openDrawer = (type: "hpd" | "ecb" | "permit" | "complaint" | "safety" | "litigation", idx: number, items: any[]) => {
     setDrawerType(type); setDrawerIdx(idx); setDrawerData(items);
   };
 
@@ -455,49 +462,64 @@ function BuildingPage() {
                 );
               })()}
               {/* Pest */}
-              <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
-                <span className="text-lg">🪳</span>
-                <div><div className="text-xs text-gray-500 dark:text-gray-400">Pest History</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{keywordCount(openViolations, ["roach", "mice", "rat", "pest", "vermin", "bed bug"])} violations</div></div>
-              </div>
+              {(() => {
+                const items = keywordFilter(openViolations, ["roach", "mice", "rat", "pest", "vermin", "bed bug"]);
+                return (
+                  <div onClick={() => items.length > 0 && openDrawer("hpd", 0, items)} className={`bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2 ${items.length > 0 ? "cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all" : ""}`}>
+                    <span className="text-lg">🪳</span>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Pest History</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{items.length} violations</div></div>
+                  </div>
+                );
+              })()}
               {/* Lead */}
               {(() => {
-                const leadAll = keywordCount(openViolations, ["lead", "lead-based"]);
-                const leadO = keywordCount(openOnly, ["lead", "lead-based"]);
+                const items = keywordFilter(openViolations, ["lead", "lead-based"]);
+                const leadO = keywordFilter(openOnly, ["lead", "lead-based"]).length;
                 return (
-                  <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                  <div onClick={() => items.length > 0 && openDrawer("hpd", 0, items)} className={`bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2 ${items.length > 0 ? "cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all" : ""}`}>
                     <span className="text-lg">🧪</span>
-                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Lead Paint</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{leadAll} violations{leadO > 0 ? <span className="text-red-600 ml-1">({leadO} open)</span> : ""}</div></div>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Lead Paint</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{items.length} violations{leadO > 0 ? <span className="text-red-600 ml-1">({leadO} open)</span> : ""}</div></div>
                   </div>
                 );
               })()}
               {/* Fire Safety */}
-              <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
-                <span className="text-lg">🔥</span>
-                <div><div className="text-xs text-gray-500 dark:text-gray-400">Fire Safety</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{fireSafety} open</div></div>
-              </div>
+              {(() => {
+                const items = keywordFilter(openOnly, ["fire", "smoke detector", "carbon monoxide", "sprinkler"]);
+                return (
+                  <div onClick={() => items.length > 0 && openDrawer("hpd", 0, items)} className={`bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2 ${items.length > 0 ? "cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all" : ""}`}>
+                    <span className="text-lg">🔥</span>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Fire Safety</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{items.length} open</div></div>
+                  </div>
+                );
+              })()}
               {/* Mold */}
-              <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
-                <span className="text-lg">🌫️</span>
-                <div><div className="text-xs text-gray-500 dark:text-gray-400">Mold</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{mold} open</div></div>
-              </div>
+              {(() => {
+                const items = keywordFilter(openOnly, ["mold", "mildew"]);
+                return (
+                  <div onClick={() => items.length > 0 && openDrawer("hpd", 0, items)} className={`bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2 ${items.length > 0 ? "cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all" : ""}`}>
+                    <span className="text-lg">🌫️</span>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Mold</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{items.length} open</div></div>
+                  </div>
+                );
+              })()}
               {/* Elevator */}
               {(() => {
-                const elevCount = ((data as any).safety_violations || []).filter((v: any) => (v.device_type || "").toLowerCase().includes("elev")).length;
+                const items = ((data as any).safety_violations || []).filter((v: any) => (v.device_type || "").toLowerCase().includes("elev"));
                 return (
-                  <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                  <div onClick={() => items.length > 0 && openDrawer("safety", 0, items)} className={`bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2 ${items.length > 0 ? "cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all" : ""}`}>
                     <span className="text-lg">⚡</span>
-                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Elevator</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{elevCount} violations</div></div>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Elevator</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{items.length} violations</div></div>
                   </div>
                 );
               })()}
               {/* Landlord */}
               {(() => {
-                const lits = (data as any).litigations || [];
-                const openLits = lits.filter((l: any) => l.casestatus === "OPEN");
+                const items = (data as any).litigations || [];
+                const openLits = items.filter((l: any) => l.casestatus === "OPEN");
                 return (
-                  <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
+                  <div onClick={() => items.length > 0 && openDrawer("litigation", 0, items)} className={`bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2 ${items.length > 0 ? "cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all" : ""}`}>
                     <span className="text-lg">👤</span>
-                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Landlord</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{lits.length} litigation{lits.length !== 1 ? "s" : ""}{openLits.length > 0 ? <span className="text-red-600 ml-1">· {openLits.length} active</span> : ""}</div></div>
+                    <div><div className="text-xs text-gray-500 dark:text-gray-400">Landlord</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">{items.length} litigation{items.length !== 1 ? "s" : ""}{openLits.length > 0 ? <span className="text-red-600 ml-1">· {openLits.length} active</span> : ""}</div></div>
                   </div>
                 );
               })()}
@@ -1244,6 +1266,27 @@ function BuildingPage() {
             { label: "Device Type", value: drawerItem.device_type },
             { label: "Device #", value: drawerItem.device_number },
             { label: "Description", value: drawerItem.violation_remarks, full: true },
+          ]}
+        />
+      )}
+      {drawerType === "litigation" && drawerItem && (
+        <DetailDrawer
+          open={true}
+          onClose={closeDrawer}
+          onPrev={drawerIdx > 0 ? () => setDrawerIdx(drawerIdx - 1) : undefined}
+          onNext={drawerIdx < drawerData.length - 1 ? () => setDrawerIdx(drawerIdx + 1) : undefined}
+          title={`HPD Litigation`}
+          subtitle={`${drawerIdx + 1} of ${drawerData.length}`}
+          source="NYC Open Data · HPD Litigations"
+          fields={[
+            { label: "Litigation ID", value: drawerItem.litigationid },
+            { label: "Case Type", value: drawerItem.casetype },
+            { label: "Case Opened", value: drawerItem.caseopendate ? drawerItem.caseopendate.slice(0, 10) : "—" },
+            { label: "Status", value: drawerItem.casestatus },
+            { label: "Judgement", value: drawerItem.casejudgement || "—" },
+            { label: "Respondent", value: drawerItem.respondent, full: true },
+            { label: "Penalty", value: drawerItem.penalty },
+            { label: "Finding of Harassment", value: drawerItem.findingofharassment || "—" },
           ]}
         />
       )}
