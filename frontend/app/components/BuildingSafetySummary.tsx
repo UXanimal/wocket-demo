@@ -110,6 +110,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "DOB Safety Violations",
       sublabel: "Elevators, boilers, fire safety",
       color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+      href: `/building/${bin}#safety-violations`,
     });
   }
   if (vacateStopWork > 0) {
@@ -147,6 +148,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       sublabel: "Environmental Control Board fines",
       color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
       percentileKey: "ecb_penalties",
+      href: `/building/${bin}/ecb`,
     });
   }
   if (activeLitigation > 0) {
@@ -155,6 +157,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "HPD Litigations",
       sublabel: "Active cases against owner",
       color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+      href: `/building/${bin}#litigations`,
     });
   }
   if (unsignedJobs > 0) {

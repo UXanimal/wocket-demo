@@ -573,6 +573,7 @@ function BuildingPage() {
           const activeSafety = safety.filter((v: any) => v.violation_status === 'Active');
           if (totalSafety === 0) return null;
           return (
+          <div id="safety-violations" />
           <Collapsible title="DOB Safety Violations" subtitle="Elevator, boiler, façade, and other safety device violations issued by DOB" badge={
             <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">{totalSafety}{activeSafety.length > 0 ? ` (${activeSafety.length} active)` : ''}</span>
           }>
@@ -809,6 +810,8 @@ function BuildingPage() {
           const closedLit = litigations.filter((l: any) => l.casestatus !== 'OPEN');
           if (litigations.length === 0) return null;
           return (
+          <>
+          <div id="litigations" />
           <Collapsible
             title="HPD Litigations"
             subtitle="Lawsuits brought by NYC against the building owner for failing to fix violations"
@@ -875,6 +878,7 @@ function BuildingPage() {
               <strong>HPD Litigations</strong> are lawsuits brought by the NYC Department of Housing Preservation and Development against building owners for failing to correct violations. Under NYC Admin Code § 27-2115, HPD can sue landlords who ignore Class C violations. A history of repeated litigation indicates a pattern of neglect that tenants can cite in Housing Court proceedings.
             </LegalNote>
           </Collapsible>
+          </>
           );
         })()}
 
