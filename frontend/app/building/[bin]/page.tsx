@@ -512,13 +512,14 @@ function BuildingPage() {
             })()}
 
             {/* Generate Renter's Report button */}
-            <div className="mt-4">
+            <div className="mt-4 flex flex-col gap-1.5">
               <Link
                 href={`/building/${bin}/renters-report${qsStr}`}
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors w-fit"
               >
                 📋 Generate Renter&apos;s Report
               </Link>
+              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md">A printable summary of this building&apos;s safety record, open violations, construction activity, and landlord history — designed for apartment hunters and lease negotiations.</p>
             </div>
           </div>
         </Collapsible>
