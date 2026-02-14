@@ -1,6 +1,7 @@
 "use client";
 import { Suspense, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import { redactSlurs } from "../../../utils/redact";
 import ListPage from "../../../components/ListPage";
 import type { GlossarySection } from "../../../components/ListPage";
 import DetailDrawer, { formatDate } from "../../../components/DetailDrawer";
@@ -121,7 +122,7 @@ function ComplaintsPageInner() {
           { label: "Date Filed", value: selected.date_entered },
           { label: "Status", value: selected.status },
           { label: "Category", value: `${selected.complaint_category} — ${selected.bisweb?.category_full || selected.category_description || "Unknown"}` },
-          ...(selected.bisweb?.description ? [{ label: "Re", value: selected.bisweb.description, full: true }] : []),
+          ...(selected.bisweb?.description ? [{ label: "Re", value: redactSlurs(selected.bisweb.description), full: true }] : []),
           { label: "Unit", value: selected.unit },
           ...(selected.bisweb?.assigned_to ? [{ label: "Assigned To", value: selected.bisweb.assigned_to }] : []),
           ...(selected.bisweb?.priority ? [{ label: "Priority", value: selected.bisweb.priority }] : []),
@@ -129,7 +130,7 @@ function ComplaintsPageInner() {
           { label: "Disposition Date", value: selected.disposition_date },
           { label: "Inspection Date", value: selected.inspection_date },
           ...(selected.bisweb?.last_inspection_badge ? [{ label: "Inspector Badge #", value: selected.bisweb.last_inspection_badge }] : []),
-          ...(selected.bisweb?.comments ? [{ label: "Inspector Comments", value: selected.bisweb.comments, full: true }] : []),
+          ...(selected.bisweb?.comments ? [{ label: "Inspector Comments", value: redactSlurs(selected.bisweb.comments), full: true }] : []),
           ...(selected.bisweb?.ref_311 ? [{ label: "311 Reference", value: selected.bisweb.ref_311 }] : []),
           ...(selected.bisweb?.owner ? [{ label: "Owner", value: selected.bisweb.owner }] : []),
         ] : []}

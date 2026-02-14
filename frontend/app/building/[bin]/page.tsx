@@ -5,6 +5,7 @@ import Link from "next/link";
 import SearchBar from "../../components/SearchBar";
 import DetailDrawer from "../../components/DetailDrawer";
 import CodeGlossary from "../../components/CodeGlossary";
+import { redactSlurs } from "../../utils/redact";
 
 function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: string; updatedAt?: string }) {
   const [summary, setSummary] = useState(existing || "");
@@ -986,14 +987,14 @@ function BuildingPage() {
             { label: "Date Filed", value: drawerItem.date_entered },
             { label: "Status", value: drawerItem.status },
             { label: "Category", value: `${drawerItem.complaint_category} — ${drawerItem.bisweb?.category_full || drawerItem.category_description || "Unknown"}` },
-            ...(drawerItem.bisweb?.description ? [{ label: "Re", value: drawerItem.bisweb.description, full: true }] : []),
+            ...(drawerItem.bisweb?.description ? [{ label: "Re", value: redactSlurs(drawerItem.bisweb.description), full: true }] : []),
             { label: "Unit", value: drawerItem.unit },
             ...(drawerItem.bisweb?.assigned_to ? [{ label: "Assigned To", value: drawerItem.bisweb.assigned_to }] : []),
             { label: "Disposition", value: drawerItem.disposition_code ? `${drawerItem.disposition_code} — ${drawerItem.bisweb?.disposition_text || drawerItem.disposition_description || "Unknown"}` : "—" },
             { label: "Disposition Date", value: drawerItem.disposition_date },
             { label: "Inspection Date", value: drawerItem.inspection_date },
             ...(drawerItem.bisweb?.last_inspection_badge ? [{ label: "Inspector Badge #", value: drawerItem.bisweb.last_inspection_badge }] : []),
-            ...(drawerItem.bisweb?.comments ? [{ label: "Inspector Comments", value: drawerItem.bisweb.comments, full: true }] : []),
+            ...(drawerItem.bisweb?.comments ? [{ label: "Inspector Comments", value: redactSlurs(drawerItem.bisweb.comments), full: true }] : []),
           ]}
         />
       )}
