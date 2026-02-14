@@ -476,10 +476,12 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     # HPD Litigations — by BIN + by owner name (across all buildings)
     owner_name = building.get('owner_name', '') if building else ''
     cur.execute("""
-        SELECT DISTINCT ON (litigationid) litigationid, casetype, caseopendate, casestatus, casejudgement, respondent, bin
-        FROM hpd_litigations
-        WHERE bin = %s
-        ORDER BY litigationid, caseopendate DESC NULLS LAST
+        SELECT * FROM (
+            SELECT DISTINCT ON (litigationid) litigationid, casetype, caseopendate, casestatus, casejudgement, respondent, bin
+            FROM hpd_litigations
+            WHERE bin = %s
+            ORDER BY litigationid, caseopendate DESC NULLS LAST
+        ) t ORDER BY caseopendate DESC NULLS LAST
     """, (bin_number,))
     building_litigations = cur.fetchall()
     
@@ -501,7 +503,7 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     for l in owner_litigations:
         l['source'] = 'owner'
     
-    litigations = building_litigations + owner_litigations
+    litigations = sorted(building_litigations + owner_litigations, key=lambda l: l.get('caseopendate') or '', reverse=True)
 
     cur.close()
     conn.close()
