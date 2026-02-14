@@ -535,11 +535,11 @@ function BuildingPage() {
               { code: "PENALIZE", label: "Penalty assessed after hearing" },
               { code: "DISMISS", label: "Violation dismissed at hearing" },
             ]},
-            { title: "Severity", entries: [
-              { code: "Unknown", label: "Severity not yet classified" },
-              { code: "Non-Hazardous", label: "Minor building code infraction" },
-              { code: "Hazardous", label: "Condition posing risk to safety" },
-              { code: "Immediately Hazardous", label: "Serious threat requiring immediate action", color: "text-red-500" },
+            { title: "Severity Classes", entries: [
+              { code: "Immediately Hazardous", label: "Serious and immediate threat to life or safety — e.g. gas leaks, structural failure, missing fire protection. Requires urgent correction.", color: "text-red-500" },
+              { code: "Hazardous", label: "Dangerous condition that could cause harm — e.g. illegal occupancy, blocked egress, faulty electrical. Must be corrected promptly." },
+              { code: "Non-Hazardous", label: "Minor code violation with no immediate danger — e.g. missing signage, paperwork issues, minor maintenance." },
+              { code: "Unknown", label: "Severity not yet classified by ECB" },
             ]},
           ]} />
           {ecb.length > 0 && (
