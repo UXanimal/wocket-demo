@@ -241,6 +241,7 @@ function BuildingPage() {
   const [drawerType, setDrawerType] = useState<"hpd" | "ecb" | "permit" | "complaint" | "safety" | null>(null);
   const [drawerIdx, setDrawerIdx] = useState(-1);
   const [drawerData, setDrawerData] = useState<any[]>([]);
+  const [mapTouched, setMapTouched] = useState(false);
   const drawerItem = drawerIdx >= 0 ? drawerData[drawerIdx] : null;
   const closeDrawer = () => { setDrawerType(null); setDrawerIdx(-1); };
   const openDrawer = (type: "hpd" | "ecb" | "permit" | "complaint" | "safety", idx: number, items: any[]) => {
@@ -369,16 +370,25 @@ function BuildingPage() {
                   loading="lazy"
                   title="Map of property location"
                 />
-                <button
-                  onClick={() => {
-                    const iframe = document.getElementById('building-map') as HTMLIFrameElement;
-                    if (iframe) { const src = iframe.src; iframe.src = ''; iframe.src = src; }
-                  }}
-                  className="absolute top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm z-10"
-                  title="Reset map view"
-                >
-                  ⟲ Reset
-                </button>
+                {mapTouched ? (
+                  <button
+                    onClick={() => {
+                      const iframe = document.getElementById('building-map') as HTMLIFrameElement;
+                      if (iframe) { const src = iframe.src; iframe.src = ''; iframe.src = src; }
+                      setMapTouched(false);
+                    }}
+                    className="absolute top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm z-10"
+                    title="Reset map view"
+                  >
+                    ⟲ Reset
+                  </button>
+                ) : (
+                  <div
+                    className="absolute inset-0 z-[5]"
+                    onPointerDown={() => setMapTouched(true)}
+                    style={{ pointerEvents: 'auto', background: 'transparent' }}
+                  />
+                )}
               </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm text-center p-4 min-h-[200px]">Map not available</div>
