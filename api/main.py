@@ -306,7 +306,8 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     unsigned_jobs = [j for j in bis_jobs if 
         j['job_type'] in ('A1', 'NB') and
         not j.get('signoff_date') and
-        'SIGNED OFF' not in (j.get('job_status_descrp') or '')]
+        'SIGNED OFF' not in (j.get('job_status_descrp') or '') and
+        'NO WORK' not in (j.get('job_description') or '').upper()]
     
     # Build lookup of DOB NOW permit details for risk tiers
     dobnow_detail = {}
@@ -325,30 +326,57 @@ def get_building(bin_number: str, apt: Optional[str] = None):
         j['no_final_inspection'] = is_issued and not has_signoff
         j['signed_off'] = has_signoff
 
+        # Check for "NO WORK" filings
+        job_desc = (j.get('job_description') or '')
+        is_no_work = 'NO WORK' in job_desc.upper()
+
         # Check DOB NOW permit info for richer risk tiers
         dp = dobnow_detail.get(j.get('job'))
-        if dp:
+        if is_no_work:
+            j['risk_tier'] = 'none'
+            j['work_type'] = dp.get('work_type') if dp else None
+        elif dp:
             wt = dp.get('work_type') or ''
             ps = dp.get('permit_status') or ''
             is_high_risk = wt in HIGH_RISK_WORK
             is_dp_signed = ps == 'Signed-off'
-            is_expired = bool(dp.get('expired_date')) and dp['expired_date'] < today
+            expired_date = dp.get('expired_date')
+            is_expired = bool(expired_date) and expired_date < today
             j['work_type'] = wt
             if is_dp_signed:
                 j['risk_tier'] = 'clear'
-            elif is_high_risk and is_expired:
-                j['risk_tier'] = 'critical'
-            elif is_expired:
-                j['risk_tier'] = 'warning'
+            elif is_expired and expired_date:
+                days_uninspected = (today - expired_date).days
+                if is_high_risk and days_uninspected >= 730:
+                    j['risk_tier'] = 'critical'
+                elif is_high_risk or days_uninspected >= 1825:
+                    j['risk_tier'] = 'high'
+                elif days_uninspected >= 365:
+                    j['risk_tier'] = 'warning'
+                else:
+                    j['risk_tier'] = 'low'
             elif not is_dp_signed:
-                j['risk_tier'] = 'active'
+                j['risk_tier'] = 'none'
             else:
                 j['risk_tier'] = 'none'
         elif has_signoff:
             j['risk_tier'] = 'clear'
             j['work_type'] = None
         elif is_issued and not has_signoff:
-            j['risk_tier'] = 'warning'
+            # BIS job without DOBNOW data — use latest_action_date
+            latest = j.get('latest_action_date')
+            if latest:
+                days_uninspected = (today - latest).days
+                if days_uninspected >= 1825:
+                    j['risk_tier'] = 'high'
+                elif days_uninspected >= 365:
+                    j['risk_tier'] = 'warning'
+                elif days_uninspected >= 0:
+                    j['risk_tier'] = 'low'
+                else:
+                    j['risk_tier'] = 'none'
+            else:
+                j['risk_tier'] = 'warning'
             j['work_type'] = None
         else:
             j['risk_tier'] = 'none'
@@ -1188,11 +1216,28 @@ def get_all_permits(
         is_issued = 'PERMIT ISSUED' in status
         j['no_final_inspection'] = is_issued and not has_signoff
         j['signed_off'] = has_signoff
+        # Check for "NO WORK" filings
+        job_desc = (j.get('job_description') or '')
+        is_no_work = 'NO WORK' in job_desc.upper()
         # Risk tier for BIS jobs
-        if has_signoff:
+        if is_no_work:
+            j['risk_tier'] = 'none'
+        elif has_signoff:
             j['risk_tier'] = 'clear'
         elif is_issued and not has_signoff:
-            j['risk_tier'] = 'warning'
+            latest = j.get('latest_action_date')
+            if latest:
+                days_uninspected = (today - latest).days
+                if days_uninspected >= 1825:
+                    j['risk_tier'] = 'high'
+                elif days_uninspected >= 365:
+                    j['risk_tier'] = 'warning'
+                elif days_uninspected >= 0:
+                    j['risk_tier'] = 'low'
+                else:
+                    j['risk_tier'] = 'none'
+            else:
+                j['risk_tier'] = 'warning'
         else:
             j['risk_tier'] = 'none'
 
@@ -1228,14 +1273,21 @@ def get_all_permits(
             j['signed_off'] = is_signed
             j['no_final_inspection'] = not is_signed and is_expired
             j['work_type'] = wt
+            expired_date = pinfo.get('expired_date')
             if is_signed:
                 j['risk_tier'] = 'clear'
-            elif is_high_risk and is_expired:
-                j['risk_tier'] = 'critical'
-            elif is_expired:
-                j['risk_tier'] = 'warning'
+            elif is_expired and expired_date:
+                days_uninspected = (today - expired_date).days
+                if is_high_risk and days_uninspected >= 730:
+                    j['risk_tier'] = 'critical'
+                elif is_high_risk or days_uninspected >= 1825:
+                    j['risk_tier'] = 'high'
+                elif days_uninspected >= 365:
+                    j['risk_tier'] = 'warning'
+                else:
+                    j['risk_tier'] = 'low'
             elif not is_signed:
-                j['risk_tier'] = 'active'
+                j['risk_tier'] = 'none'
             else:
                 j['risk_tier'] = 'none'
         else:
@@ -1259,7 +1311,7 @@ def get_all_permits(
         all_rows = [r for r in all_rows if r.get('risk_tier') == risk_tier]
 
     # Sort
-    RISK_ORDER = {'critical': 0, 'warning': 1, 'active': 2, 'none': 3, 'clear': 4}
+    RISK_ORDER = {'critical': 0, 'high': 1, 'warning': 2, 'low': 3, 'active': 4, 'none': 5, 'clear': 6}
     if sort == "risk":
         def inspect_order(r):
             nfi = r.get('no_final_inspection', False)

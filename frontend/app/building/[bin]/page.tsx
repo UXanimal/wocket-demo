@@ -277,8 +277,10 @@ function BuildingPage() {
   const coRecords = data.co_records || [];
   const noInspectionCount = bisJobs.filter((j: any) => j.no_final_inspection).length;
   const criticalPermits = detailedPermits.filter((p: any) => p.risk_tier === 'critical');
+  const highPermits = detailedPermits.filter((p: any) => p.risk_tier === 'high');
   const warningPermits = detailedPermits.filter((p: any) => p.risk_tier === 'warning');
-  const watchPermits = detailedPermits.filter((p: any) => p.risk_tier === 'watch');
+  const lowPermits = detailedPermits.filter((p: any) => p.risk_tier === 'low');
+  const clearPermits = detailedPermits.filter((p: any) => p.risk_tier === 'clear');
   const criticalByType: Record<string, number> = {};
   criticalPermits.forEach((p: any) => {
     const wt = p.work_type || "Other";
@@ -636,16 +638,17 @@ function BuildingPage() {
           defaultOpen={criticalPermits.length > 0}
           badge={<>
             {criticalPermits.length > 0 && <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium"><span className="inline-block w-1.5 h-1.5 rounded-full bg-red-600" />{criticalPermits.length} Critical</span>}
-            {warningPermits.length > 0 && <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium"><span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500" />{warningPermits.length} Expired</span>}
-            {watchPermits.length > 0 && <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-medium"><span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500" />{watchPermits.length} Active</span>}
+            {highPermits.length > 0 && <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium"><span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400" />{highPermits.length} High</span>}
+            {warningPermits.length > 0 && <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium"><span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500" />{warningPermits.length} Warning</span>}
+            {lowPermits.length > 0 && <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-medium"><span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500" />{lowPermits.length} Low</span>}
           </>}
         >
           <div className="grid md:grid-cols-2 gap-6 mt-4">
             <div className="grid grid-cols-2 gap-4">
-              <Stat label="Critical — High-Risk Expired" value={criticalPermits.length} color={criticalPermits.length > 0 ? "text-red-600" : undefined} />
-              <Stat label="Expired Uninspected" value={warningPermits.length} color={warningPermits.length > 0 ? "text-orange-500" : undefined} />
-              <Stat label="Active — Awaiting Inspection" value={watchPermits.length} />
-              <Stat label="Unsigned A1/NB (BIS)" value={unsignedJobs.length} color={unsignedJobs.length > 0 ? "text-orange-600" : undefined} />
+              <Stat label="Critical" value={criticalPermits.length} color={criticalPermits.length > 0 ? "text-red-600" : undefined} />
+              <Stat label="High" value={highPermits.length} color={highPermits.length > 0 ? "text-red-400" : undefined} />
+              <Stat label="Warning / Low" value={warningPermits.length + lowPermits.length} color={warningPermits.length + lowPermits.length > 0 ? "text-orange-500" : undefined} />
+              <Stat label="Signed Off" value={clearPermits.length} color={clearPermits.length > 0 ? "text-green-600" : undefined} />
             </div>
             <div className="grid grid-cols-1 gap-2">
               {Object.entries(criticalByType).map(([wt, count]) => (
@@ -656,10 +659,12 @@ function BuildingPage() {
           </div>
           <CodeGlossary sections={[
             { title: "Risk Tiers", entries: [
-              { code: "Critical", label: "High-risk work (gas, plumbing, sprinklers) — expired, never inspected", color: "text-red-500" },
-              { code: "Warning", label: "Permit expired without final signoff", color: "text-orange-500" },
-              { code: "Active", label: "Permit active, awaiting inspection", color: "text-yellow-500" },
-              { code: "Clear", label: "Work signed off / inspection passed", color: "text-green-500" },
+              { code: "Critical", label: "High-risk work (plumbing, gas, sprinklers, structural) — uninspected 2+ years", color: "text-red-600" },
+              { code: "High", label: "High-risk work uninspected < 2 years, or any work uninspected 5+ years", color: "text-red-400" },
+              { code: "Warning", label: "Non-high-risk work uninspected 1–5 years", color: "text-orange-500" },
+              { code: "Low", label: "Uninspected less than 1 year", color: "text-yellow-500" },
+              { code: "Clear", label: "Signed off — final inspection completed", color: "text-green-500" },
+              { code: "None", label: "No work filings, active permits, or not yet expired", color: "text-gray-400" },
             ]},
             { title: "Job Types", entries: [
               { code: "A1", label: "Alteration Type 1 — major structural change affecting use, egress, or occupancy" },
@@ -670,11 +675,12 @@ function BuildingPage() {
             ]},
           ]} />
           {(bisJobs.length > 0 || detailedPermits.length > 0) && (() => {
-            const RISK_ORDER: Record<string, number> = { critical: 0, warning: 1, active: 2, watch: 2, none: 3, clear: 4 };
+            const RISK_ORDER: Record<string, number> = { critical: 0, high: 1, warning: 2, low: 3, active: 4, none: 5, clear: 6 };
             const riskDisc = (tier: string) => {
               if (tier === 'critical') return <span className="inline-block w-2 h-2 rounded-full bg-red-600 shrink-0" />;
+              if (tier === 'high') return <span className="inline-block w-2 h-2 rounded-full bg-red-400 shrink-0" />;
               if (tier === 'warning') return <span className="inline-block w-2 h-2 rounded-full bg-orange-500 shrink-0" />;
-              if (tier === 'active' || tier === 'watch') return <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 shrink-0" />;
+              if (tier === 'low') return <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 shrink-0" />;
               if (tier === 'clear') return <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />;
               return <span className="inline-block w-2 h-2 rounded-full bg-gray-400 shrink-0" />;
             };
@@ -700,7 +706,7 @@ function BuildingPage() {
             // Sort by inspection status: no final inspection first, then pending, then signed off
             const inspectOrder = (j: any) => {
               if (j.no_final_inspection && !j.signed_off) return 0;
-              if (!j.signed_off && (j.risk_tier === 'active' || j.risk_tier === 'watch')) return 1;
+              if (!j.signed_off && (j.risk_tier === 'critical' || j.risk_tier === 'high')) return 1;
               if (!j.signed_off) return 2;
               return 3;
             };
@@ -1012,7 +1018,7 @@ function BuildingPage() {
             { label: "Type", value: drawerItem.job_type },
             { label: "Work Type", value: drawerItem.work_type || "—" },
             { label: "Status", value: drawerItem.job_status_descrp },
-            { label: "Risk", value: drawerItem.risk_tier === 'critical' ? 'Critical' : drawerItem.risk_tier === 'warning' ? 'Expired' : drawerItem.risk_tier === 'active' ? 'Active' : drawerItem.risk_tier === 'clear' ? 'Signed Off' : '—' },
+            { label: "Risk", value: drawerItem.risk_tier === 'critical' ? 'Critical' : drawerItem.risk_tier === 'high' ? 'High' : drawerItem.risk_tier === 'warning' ? 'Warning' : drawerItem.risk_tier === 'low' ? 'Low' : drawerItem.risk_tier === 'clear' ? 'Signed Off' : drawerItem.risk_tier === 'none' ? 'None' : '—' },
             { label: "Last Action", value: formatDate(drawerItem.latest_action_date) },
             { label: "Description", value: drawerItem.job_description, full: true },
           ]}
