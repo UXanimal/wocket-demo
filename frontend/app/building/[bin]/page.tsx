@@ -332,7 +332,7 @@ function BuildingPage() {
           <span className={`text-sm sm:text-base md:text-lg font-bold w-[26px] sm:w-[28px] md:w-[30px] aspect-square inline-flex items-center justify-center leading-none rounded-lg -translate-y-[4px] ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
           <Link
             href={`/building/${bin}/report${qsStr}`}
-            className="ml-auto text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1.5 leading-none -translate-y-[4px]"
+            className="hidden sm:flex ml-auto text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors items-center gap-1.5 leading-none -translate-y-[4px]"
           >
             📄 Generate Report
           </Link>
@@ -343,9 +343,15 @@ function BuildingPage() {
           const otherAddresses = [b.address, ...allAliases].filter((a: string) => a && a !== mainAddr);
           const unique = [...new Set(otherAddresses)];
           return unique.length > 0 ? (
-            <div className="text-sm text-gray-400 dark:text-gray-500 mb-4">Also known as: {unique.join(", ")}</div>
+            <div className="text-sm text-gray-400 dark:text-gray-500 mb-2">Also known as: {unique.join(", ")}</div>
           ) : null;
         })()}
+        <Link
+          href={`/building/${bin}/report${qsStr}`}
+          className="sm:hidden text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors inline-flex items-center gap-1.5 mb-2"
+        >
+          📄 Generate Report
+        </Link>
 
         {/* Building Safety Summary */}
         <BuildingSafetySummary data={data} />

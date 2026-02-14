@@ -375,7 +375,7 @@ function ReportPage() {
             {address}, {b.borough ? b.borough.charAt(0) + b.borough.slice(1).toLowerCase() : ""}, New York
           </h1>
           {otherAddresses.length > 0 && (
-            <div style={{ fontSize: "9pt", color: "#6b7280", marginBottom: "4px" }}>
+            <div style={{ fontSize: "9pt", color: "#111827", marginBottom: "4px" }}>
               Also known as: {otherAddresses.join(", ")}
             </div>
           )}
@@ -429,7 +429,7 @@ function ReportPage() {
                 </div>
               )}
             </div>
-            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC Dept. of Buildings — Certificates of Occupancy (via NYC Open Data, dataset bs8b-p36w)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC Dept. of Buildings — Certificates of Occupancy (via NYC Open Data, dataset bs8b-p36w)</div>
           </section>
         )}
 
@@ -468,7 +468,7 @@ function ReportPage() {
                 })}
               </tbody>
             </table>
-            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC HPD — Housing Maintenance Code Violations (via NYC Open Data, dataset wvxf-dwi5)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC HPD — Housing Maintenance Code Violations (via NYC Open Data, dataset wvxf-dwi5)</div>
           </section>
         )}
 
@@ -500,7 +500,7 @@ function ReportPage() {
                 ))}
               </tbody>
             </table>
-            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — ECB Violations (via NYC Open Data, dataset 6bgk-3dad)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC DOB — ECB Violations (via NYC Open Data, dataset 6bgk-3dad)</div>
           </section>
         )}
 
@@ -538,7 +538,7 @@ function ReportPage() {
                 })}
               </tbody>
             </table>
-            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — Safety Violations</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC DOB — Safety Violations</div>
           </section>
         )}
 
@@ -570,7 +570,7 @@ function ReportPage() {
                 ))}
               </tbody>
             </table>
-            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — Complaints Received (via NYC Open Data, dataset eabe-havv)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC DOB — Complaints Received (via NYC Open Data, dataset eabe-havv)</div>
           </section>
         )}
 
@@ -607,7 +607,7 @@ function ReportPage() {
                 })}
               </tbody>
             </table>
-            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC DOB — BIS Job Filings (via NYC Open Data, dataset ic3t-wcy2) and DOB NOW Permits (dataset rbx6-tga4)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC DOB — BIS Job Filings (via NYC Open Data, dataset ic3t-wcy2) and DOB NOW Permits (dataset rbx6-tga4)</div>
           </section>
         )}
 
@@ -641,7 +641,7 @@ function ReportPage() {
                 ))}
               </tbody>
             </table>
-            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC HPD — Litigations (via NYC Open Data, dataset 59kj-x8nc)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC HPD — Litigations (via NYC Open Data, dataset 59kj-x8nc)</div>
           </section>
         )}
 
@@ -677,12 +677,12 @@ function ReportPage() {
                 })}
               </tbody>
             </table>
-            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#9ca3af" }}>Source: NYC HPD — Registration Contacts (via NYC Open Data, dataset feu5-w2e2)</div>
+            <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC HPD — Registration Contacts (via NYC Open Data, dataset feu5-w2e2)</div>
           </section>
         )}
 
         {/* Footer / Disclaimer */}
-        <div className="report-footer" style={{ marginTop: "32px", paddingTop: "16px", borderTop: "2px solid #111827", fontSize: "10pt", color: "#6b7280", lineHeight: "1.6" }}>
+        <div className="report-footer" style={{ marginTop: "32px", paddingTop: "16px", borderTop: "2px solid #111827", fontSize: "10pt", color: "#111827", lineHeight: "1.6" }}>
           <p style={{ fontWeight: 600, color: "#374151", marginBottom: "4px" }}>Data Sources & Disclaimer</p>
           <p style={{ marginBottom: "8px" }}>
             All data in this report is sourced from publicly available NYC government databases including the NYC Department of Buildings (DOB),
@@ -694,7 +694,7 @@ function ReportPage() {
             it should be independently verified. Under CPLR § 4520 and NYC Admin Code, official records
             from city agencies are generally admissible as evidence in Housing Court proceedings.
           </p>
-          <p style={{ fontSize: "8pt", color: "#9ca3af" }}>
+          <p style={{ fontSize: "8pt", color: "#374151" }}>
             Generated by Wocket · {generatedDate} at {generatedTime} · {totalItems} items included
           </p>
         </div>
