@@ -126,7 +126,7 @@ function OwnerPage() {
       .then((data) => {
         setBuildings(data.buildings || []);
         setSummary(data.summary || null);
-        setLitigations(litigations || []);
+        setLitigations(data.litigations || []);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
