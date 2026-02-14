@@ -1,11 +1,28 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 interface BuildingSafetySummaryProps {
   data: any;
 }
 
+function percentileLabel(pct: number): string | null {
+  if (pct >= 90) return `Worse than ${pct}% of NYC buildings`;
+  if (pct >= 75) return `More than ${pct}% of NYC buildings`;
+  if (pct >= 50) return "Above average for NYC buildings";
+  return null;
+}
+
 export default function BuildingSafetySummary({ data }: BuildingSafetySummaryProps) {
   const b = data.building;
+  const [percentiles, setPercentiles] = useState<any>({});
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://wocket-demo-production-adad.up.railway.app'}/api/building/${b.bin}/percentiles`)
+      .then(r => r.json())
+      .then(d => setPercentiles(d.percentiles || {}))
+      .catch(() => {});
+  }, [b.bin]);
 
   const tcoExpired = b.tco_expired || b.co_status === "TCO";
   const tcoDate = b.latest_tco_date ? new Date(b.latest_tco_date) : null;
@@ -47,7 +64,8 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
     );
   }
 
-  const tiles: { value: string; label: string; sublabel: string; color: string }[] = [];
+  // Each tile now has an optional percentileKey to look up comparative context
+  const tiles: { value: string; label: string; sublabel: string; color: string; percentileKey?: string }[] = [];
 
   if (tcoExpired) {
     tiles.push({
@@ -63,6 +81,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "Open Class C",
       sublabel: "Immediately hazardous — 24hr correction",
       color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+      percentileKey: "class_c",
     });
   }
   if (activeSafety > 0) {
@@ -95,6 +114,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "ECB Penalties",
       sublabel: "Environmental Control Board fines",
       color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+      percentileKey: "ecb_penalties",
     });
   }
   if (activeLitigation > 0) {
@@ -119,6 +139,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "DOB Complaints",
       sublabel: "Total complaints on record",
       color: "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200",
+      percentileKey: "complaints",
     });
   }
 
@@ -128,13 +149,24 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
         <h3 className="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">At a Glance</h3>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {tiles.map((t, i) => (
-          <div key={i} className={`rounded-lg px-3 py-2.5 ${t.color.split(" ").filter(c => c.startsWith("bg-") || c.startsWith("dark:bg-")).join(" ")}`}>
-            <div className={`text-xl font-bold font-nunito ${t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ")}`}>{t.value}</div>
-            <div className={`text-xs font-medium mt-0.5 ${t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ")}`}>{t.label}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t.sublabel}</div>
-          </div>
-        ))}
+        {tiles.map((t, i) => {
+          const pct = t.percentileKey ? percentiles[t.percentileKey] : undefined;
+          const pctLabel = pct !== undefined ? percentileLabel(pct) : null;
+          const isSevere = pct !== undefined && pct >= 90;
+
+          return (
+            <div key={i} className={`rounded-lg px-3 py-2.5 ${t.color.split(" ").filter(c => c.startsWith("bg-") || c.startsWith("dark:bg-")).join(" ")}`}>
+              <div className={`text-xl font-bold font-nunito ${t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ")}`}>{t.value}</div>
+              <div className={`text-xs font-medium mt-0.5 ${t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ")}`}>{t.label}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t.sublabel}</div>
+              {pctLabel && (
+                <div className={`text-xs mt-1 ${isSevere ? "font-semibold text-red-700 dark:text-red-300" : "font-medium text-gray-600 dark:text-gray-300"}`}>
+                  {pctLabel}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

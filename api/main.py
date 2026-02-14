@@ -1534,6 +1534,57 @@ def _template_summary(ctx: dict) -> str:
     return "\n\n".join(parts)
 
 
+@app.get("/api/building/{bin_number}/percentiles")
+def building_percentiles(bin_number: str):
+    """Return percentile rankings for key building metrics."""
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cur.execute("SELECT open_class_c, total_hpd_violations, ecb_penalties FROM building_scores WHERE bin = %s", (bin_number,))
+        row = cur.fetchone()
+        if not row:
+            return {"percentiles": {}}
+
+        cur.execute("SELECT COUNT(*) as count FROM building_scores WHERE open_class_c IS NOT NULL")
+        total = cur.fetchone()['count']
+        if total == 0:
+            return {"percentiles": {}}
+
+        results = {}
+        field_map = {
+            "class_c": "open_class_c",
+            "hpd_total": "total_hpd_violations",
+            "ecb_penalties": "ecb_penalties",
+        }
+        for key, col in field_map.items():
+            value = row.get(col)
+            if value is not None and value > 0:
+                cur.execute(f"SELECT COUNT(*) as count FROM building_scores WHERE {col} <= %s AND {col} IS NOT NULL", (value,))
+                count = cur.fetchone()['count']
+                results[key] = round(count / total * 100)
+
+        # Complaints percentile
+        cur.execute("SELECT COUNT(*) as count FROM dob_complaints WHERE bin = %s", (bin_number,))
+        complaint_count = cur.fetchone()['count']
+        if complaint_count > 0:
+            cur.execute("""
+                WITH bldg_complaints AS (
+                    SELECT bin, COUNT(*) as cnt FROM dob_complaints GROUP BY bin
+                )
+                SELECT COUNT(*) as count FROM bldg_complaints WHERE cnt <= %s
+            """, (complaint_count,))
+            below = cur.fetchone()['count']
+            cur.execute("SELECT COUNT(DISTINCT bin) as count FROM dob_complaints")
+            total_with = cur.fetchone()['count']
+            if total_with > 0:
+                results["complaints"] = round(below / total_with * 100)
+
+        return {"percentiles": results}
+    finally:
+        cur.close()
+        conn.close()
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
