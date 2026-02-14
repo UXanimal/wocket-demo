@@ -78,7 +78,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       value: tcoYearsOverdue ? `${tcoYearsOverdue}yr` : "Expired",
       label: "No Valid C of O",
       sublabel: "Operating on expired TCO — violates MDL §301",
-      color: "bg-[#e8daf0] dark:bg-[#3b2248]/40 text-[#5c3470] dark:text-[#c9a0d8]",
+      color: "bg-[#e4d5d8] dark:bg-[#3d2630]/50 text-[#5e3345] dark:text-[#c49aaa]",
     });
   }
   if (openClassC > 0) {
