@@ -51,10 +51,19 @@ export default function ListPage({
   const [rows, setRows] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [sort, setSort] = useState(defaultSort);
-  const [order, setOrder] = useState(defaultOrder);
+  const [sort, setSort] = useState(searchParams.get("sort") || defaultSort);
+  const [order, setOrder] = useState(searchParams.get("order") || defaultOrder);
   const [search, setSearch] = useState("");
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    if (filters) {
+      filters.forEach(f => {
+        const val = searchParams.get(f.key);
+        if (val) initial[f.key] = val;
+      });
+    }
+    return initial;
+  });
   const [loading, setLoading] = useState(true);
   const [address, setAddress] = useState(addrParam);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface BuildingSafetySummaryProps {
   data: any;
@@ -71,7 +72,8 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
   }
 
   // Each tile now has an optional percentileKey to look up comparative context
-  const tiles: { value: string; label: string; sublabel: string; color: string; percentileKey?: string }[] = [];
+  const bin = b.bin;
+  const tiles: { value: string; label: string; sublabel: string; color: string; percentileKey?: string; href?: string }[] = [];
 
   if (tcoExpired) {
     tiles.push({
@@ -79,6 +81,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "No Valid C of O",
       sublabel: "Operating on expired TCO — violates MDL §301",
       color: "bg-[#e4d5d8] dark:bg-[#3d2630]/50 text-[#5e3345] dark:text-[#c49aaa]",
+      href: "/explore/expired-tcos",
     });
   }
   if (openClassC > 0) {
@@ -98,6 +101,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       sublabel: cAgeSublabel,
       color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
       percentileKey: "class_c",
+      href: `/building/${bin}/violations?class=C&sort=severity&order=desc`,
     });
   }
   if (activeSafety > 0) {
@@ -114,6 +118,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "Vacate / Stop Work",
       sublabel: "Active orders on record",
       color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+      href: `/building/${bin}/complaints?status=ACTIVE`,
     });
   }
   if (openClassB > 0) {
@@ -132,6 +137,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "Open Class B",
       sublabel: bAgeSublabel,
       color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+      href: `/building/${bin}/violations?class=B&sort=severity&order=desc`,
     });
   }
   if (ecbPenalties > 0) {
@@ -157,6 +163,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       label: "Unsigned Alt. Jobs",
       sublabel: "No final sign-off from DOB",
       color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+      href: `/building/${bin}/permits`,
     });
   }
   if (totalComplaints > 50) {
@@ -166,6 +173,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
       sublabel: "Total complaints on record",
       color: "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200",
       percentileKey: "complaints",
+      href: `/building/${bin}/complaints`,
     });
   }
 
@@ -180,16 +188,28 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
           const pctLabel = pct !== undefined ? percentileLabel(pct) : null;
           const isSevere = pct !== undefined && pct >= 90;
 
-          return (
-            <div key={i} className={`rounded-lg px-3 py-2.5 ${t.color.split(" ").filter(c => c.startsWith("bg-") || c.startsWith("dark:bg-")).join(" ")}`}>
-              <div className={`text-xl font-bold font-nunito ${t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ")}`}>{t.value}</div>
-              <div className={`text-xs font-medium mt-0.5 ${t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ")}`}>{t.label}</div>
+          const bgClasses = t.color.split(" ").filter(c => c.startsWith("bg-") || c.startsWith("dark:bg-")).join(" ");
+          const textClasses = t.color.split(" ").filter(c => c.startsWith("text-") || c.startsWith("dark:text-")).join(" ");
+          const content = (
+            <>
+              <div className={`text-xl font-bold font-nunito ${textClasses}`}>{t.value}</div>
+              <div className={`text-xs font-medium mt-0.5 ${textClasses}`}>{t.label}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t.sublabel}</div>
               {pctLabel && (
                 <div className={`text-xs mt-1 ${isSevere ? "font-semibold text-red-700 dark:text-red-300" : "font-medium text-gray-600 dark:text-gray-300"}`}>
                   {pctLabel}
                 </div>
               )}
+            </>
+          );
+
+          return t.href ? (
+            <Link key={i} href={t.href} className={`rounded-lg px-3 py-2.5 ${bgClasses} hover:opacity-80 transition-opacity cursor-pointer block`}>
+              {content}
+            </Link>
+          ) : (
+            <div key={i} className={`rounded-lg px-3 py-2.5 ${bgClasses}`}>
+              {content}
             </div>
           );
         })}
