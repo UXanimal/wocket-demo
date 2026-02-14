@@ -830,9 +830,9 @@ def get_owner_portfolio(
     # Litigation city-wide avg: avg litigations per building across owners with 2+ buildings
     cur.execute("""
         WITH owner_lit AS (
-            SELECT bs.owner_name, COUNT(DISTINCT hl.caseid) AS lit_count, COUNT(DISTINCT bs.bin) AS bldg_count
+            SELECT bs.owner_name, COUNT(DISTINCT hl.litigationid) AS lit_count, COUNT(DISTINCT bs.bin) AS bldg_count
             FROM building_scores bs
-            LEFT JOIN hpd_litigations hl ON hl.bin::text = bs.bin::text
+            LEFT JOIN hpd_litigations hl ON hl.bin = bs.bin
             WHERE bs.owner_name IS NOT NULL
             GROUP BY bs.owner_name
             HAVING COUNT(DISTINCT bs.bin) >= 2
