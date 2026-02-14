@@ -573,6 +573,7 @@ function BuildingPage() {
           const activeSafety = safety.filter((v: any) => v.violation_status === 'Active');
           if (totalSafety === 0) return null;
           return (
+          <>
           <div id="safety-violations" />
           <Collapsible title="DOB Safety Violations" subtitle="Elevator, boiler, façade, and other safety device violations issued by DOB" badge={
             <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">{totalSafety}{activeSafety.length > 0 ? ` (${activeSafety.length} active)` : ''}</span>
@@ -620,6 +621,7 @@ function BuildingPage() {
               </div>
             </div>
           </Collapsible>
+          </>
           );
         })()}
 
