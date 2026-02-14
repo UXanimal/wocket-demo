@@ -328,7 +328,7 @@ function BuildingPage() {
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">
             {addrParam && addrParam !== b.address ? addrParam : b.address}
           </h1>
-          <span className={`text-xl sm:text-2xl md:text-3xl font-bold w-10 sm:w-12 md:w-14 aspect-square inline-flex items-center justify-center leading-none rounded-lg ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
+          <span className={`text-base sm:text-lg md:text-xl font-bold w-8 sm:w-[33px] md:w-[35px] aspect-square inline-flex items-center justify-center leading-none rounded-lg ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
           <Link
             href={`/building/${bin}/report${qsStr}`}
             className="ml-auto text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1.5 leading-none"
