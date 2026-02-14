@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useState, useMemo } from "react";
+import { Suspense, useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -76,6 +76,23 @@ function gradeBadgeLight(g: string) {
 function fmt$(v: any) {
   if (v == null) return "—";
   return "$" + Number(v).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function Collapsible({ title, children, defaultOpen = false, badge, id }: { title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode; id?: string }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const ref = useRef<HTMLDivElement>(null);
+  return (
+    <div ref={ref} id={id} className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none overflow-hidden">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 md:px-6 py-3 md:py-4 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117] transition-colors text-left">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-gray-400 dark:text-gray-500 text-sm">{open ? "▼" : "▶"}</span>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+          {badge}
+        </div>
+      </button>
+      {open && <div className="px-4 md:px-6 pb-4 md:pb-6 border-t border-gray-100 dark:border-gray-800">{children}</div>}
+    </div>
+  );
 }
 
 const GRADES = ["A", "B", "C", "D", "F"];
@@ -325,134 +342,166 @@ function OwnerPage() {
           </div>
         </div>
 
-        {/* Ownership Network */}
-        <div id="network" className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4 md:p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Ownership Network</h2>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Connected people, entities, and buildings traced through HPD registration records</p>
-          <OwnerNetwork centerName={ownerName} initialSelectedId={selectedNetworkNode || undefined} ownerMode={mode || undefined} comparisons={summary?.comparisons ? { avg_violations_per_building: summary.comparisons.avg_violations_per_building, avg_open_class_c_per_building: summary.comparisons.avg_open_class_c_per_building, violation_percentile: summary.comparisons.violation_percentile, penalty_percentile: summary.comparisons.penalty_percentile } : null} />
-        </div>
-
-        {/* Filters & Building List */}
-        <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4 md:p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Buildings ({filtered.length})</h2>
-          
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <input
-              type="text"
-              placeholder="Filter by address..."
-              value={addressSearch}
-              onChange={(e) => setAddressSearch(e.target.value)}
-              className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
-            />
-            {/* Grade pills */}
-            {GRADES.map((g) => (
-              <button
-                key={g}
-                onClick={() => setGradeFilter(gradeFilter === g ? null : g)}
-                className={`text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${gradeFilter === g ? gradeBadgeLight(g) + " ring-2 ring-offset-1 ring-blue-400" : "bg-gray-50 dark:bg-[#0f1117] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 "}`}
-              >
-                {g}
-              </button>
-            ))}
-            {/* Borough pills */}
-            {summary?.boroughs.map((boro) => (
-              <button
-                key={boro}
-                onClick={() => setBoroughFilter(boroughFilter === boro ? null : boro)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${boroughFilter === boro ? "bg-blue-100 text-blue-800 border-blue-300 ring-2 ring-offset-1 ring-blue-400" : "bg-gray-50 dark:bg-[#0f1117] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 "}`}
-              >
-                {boro}
-              </button>
-            ))}
-            {(gradeFilter || boroughFilter || addressSearch) && (
-              <button onClick={() => { setGradeFilter(null); setBoroughFilter(null); setAddressSearch(""); }} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                Clear filters
-              </button>
-            )}
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 dark:text-gray-400 border-b">
-                  <SortHeader label="Address" field="address" />
-                  <SortHeader label="Borough" field="borough" />
-                  <SortHeader label="Grade" field="score_grade" />
-                  <SortHeader label="Open C" field="open_class_c" />
-                  <SortHeader label="HPD Viol." field="total_hpd_violations" />
-                  <SortHeader label="ECB Penalties" field="ecb_penalties" />
-                  <SortHeader label="C of O" field="co_status" />
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((b) => (
-                  <tr
-                    key={b.bin}
-                    onClick={() => router.push(`/building/${b.bin}`)}
-                    className="border-b border-gray-50 dark:border-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors"
-                  >
-                    <td className="py-2.5 pr-2 font-medium text-gray-900 dark:text-gray-100">{b.address}</td>
-                    <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{b.borough}</td>
-                    <td className="py-2.5 pr-2">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
-                    </td>
-                    <td className={`py-2.5 pr-2 ${(b.open_class_c || 0) > 0 ? "text-red-600 font-medium" : "text-gray-600 dark:text-gray-300"}`}>{b.open_class_c || 0}</td>
-                    <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{b.total_hpd_violations || 0}</td>
-                    <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{fmt$(b.ecb_penalties)}</td>
-                    <td className="py-2.5 pr-2">
-                      {b.tco_expired ? (
-                        <span className="text-red-600 text-xs font-medium">Expired TCO</span>
-                      ) : (
-                        <span className="text-gray-600 dark:text-gray-300 text-xs">{b.co_status || "—"}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filtered.length === 0 && (
-              <div className="text-center text-gray-400 dark:text-gray-500 py-8">No buildings match your filters</div>
-            )}
-          </div>
-        </div>
-        {/* HPD Litigations */}
-        {litigations && litigations.length > 0 && (
-          <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4 md:p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">HPD Litigations</h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Lawsuits brought by NYC against this owner for failing to fix violations</p>
-            <div className="flex gap-4 mb-4 text-sm">
-              <div><span className="text-gray-500 dark:text-gray-400">Total Cases</span><div className="font-medium text-gray-900 dark:text-gray-100">{litigations.length}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">Open</span><div className="font-medium text-red-600">{litigations.filter((l: any) => l.casestatus === 'OPEN').length}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">Judgements</span><div className="font-medium text-orange-500">{litigations.filter((l: any) => l.casejudgement === 'YES').length}</div></div>
+        {/* Buildings List (collapsed by default) */}
+        <Collapsible
+          title={`Buildings (${filtered.length})`}
+          badge={
+            <div className="flex items-center gap-2">
+              {summary && (
+                <>
+                  <div className="flex items-center gap-1">
+                    {GRADES.map((g) => {
+                      const count = summary.grade_distribution[g] || 0;
+                      if (count === 0) return null;
+                      return <span key={g} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${gradeBadgeLight(g)}`}>{g}:{count}</span>;
+                    })}
+                  </div>
+                  {summary.total_open_class_c > 0 && <span className="text-xs text-red-600 font-medium">{summary.total_open_class_c} open C</span>}
+                </>
+              )}
             </div>
+          }
+        >
+          <div className="pt-3">
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <input
+                type="text"
+                placeholder="Filter by address..."
+                value={addressSearch}
+                onChange={(e) => setAddressSearch(e.target.value)}
+                className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+              />
+              {GRADES.map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGradeFilter(gradeFilter === g ? null : g)}
+                  className={`text-xs font-bold px-2.5 py-1 rounded-full border transition-colors ${gradeFilter === g ? gradeBadgeLight(g) + " ring-2 ring-offset-1 ring-blue-400" : "bg-gray-50 dark:bg-[#0f1117] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 "}`}
+                >
+                  {g}
+                </button>
+              ))}
+              {summary?.boroughs.map((boro) => (
+                <button
+                  key={boro}
+                  onClick={() => setBoroughFilter(boroughFilter === boro ? null : boro)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${boroughFilter === boro ? "bg-blue-100 text-blue-800 border-blue-300 ring-2 ring-offset-1 ring-blue-400" : "bg-gray-50 dark:bg-[#0f1117] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 "}`}
+                >
+                  {boro}
+                </button>
+              ))}
+              {(gradeFilter || boroughFilter || addressSearch) && (
+                <button onClick={() => { setGradeFilter(null); setBoroughFilter(null); setAddressSearch(""); }} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                  Clear filters
+                </button>
+              )}
+            </div>
+
+            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-gray-500 dark:text-gray-400 border-b">
-                    <th className="pb-2 pr-2">Type</th>
-                    <th className="pb-2 pr-2">Opened</th>
-                    <th className="pb-2 pr-2">Status</th>
-                    <th className="pb-2 pr-2">Judgement</th>
-                    <th className="pb-2">Respondent</th>
+                    <SortHeader label="Address" field="address" />
+                    <SortHeader label="Borough" field="borough" />
+                    <SortHeader label="Grade" field="score_grade" />
+                    <SortHeader label="Open C" field="open_class_c" />
+                    <SortHeader label="HPD Viol." field="total_hpd_violations" />
+                    <SortHeader label="ECB Penalties" field="ecb_penalties" />
+                    <SortHeader label="C of O" field="co_status" />
                   </tr>
                 </thead>
                 <tbody>
-                  {litigations.map((l: any, i: number) => (
-                    <tr key={i} className={`border-b border-gray-50 dark:border-gray-800 ${l.casestatus === 'OPEN' ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
-                      <td className="py-2 pr-2 text-xs">{l.casetype}</td>
-                      <td className="py-2 pr-2 text-xs">{l.caseopendate ? l.caseopendate.slice(0, 10) : "—"}</td>
-                      <td className="py-2 pr-2 text-xs">{l.casestatus}</td>
-                      <td className="py-2 pr-2 text-xs">{l.casejudgement || "—"}</td>
-                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate">{l.respondent}</td>
+                  {filtered.map((b) => (
+                    <tr
+                      key={b.bin}
+                      onClick={() => router.push(`/building/${b.bin}`)}
+                      className="border-b border-gray-50 dark:border-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors"
+                    >
+                      <td className="py-2.5 pr-2 font-medium text-gray-900 dark:text-gray-100">{b.address}</td>
+                      <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{b.borough}</td>
+                      <td className="py-2.5 pr-2">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
+                      </td>
+                      <td className={`py-2.5 pr-2 ${(b.open_class_c || 0) > 0 ? "text-red-600 font-medium" : "text-gray-600 dark:text-gray-300"}`}>{b.open_class_c || 0}</td>
+                      <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{b.total_hpd_violations || 0}</td>
+                      <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{fmt$(b.ecb_penalties)}</td>
+                      <td className="py-2.5 pr-2">
+                        {b.tco_expired ? (
+                          <span className="text-red-600 text-xs font-medium">Expired TCO</span>
+                        ) : (
+                          <span className="text-gray-600 dark:text-gray-300 text-xs">{b.co_status || "—"}</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {filtered.length === 0 && (
+                <div className="text-center text-gray-400 dark:text-gray-500 py-8">No buildings match your filters</div>
+              )}
             </div>
           </div>
+        </Collapsible>
+
+        {/* HPD Litigations (collapsed by default) */}
+        {litigations && litigations.length > 0 && (
+          <Collapsible
+            title="HPD Litigations"
+            badge={
+              <div className="flex items-center gap-2">
+                <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">{litigations.length}</span>
+                {litigations.filter((l: any) => l.casestatus === 'OPEN').length > 0 && (
+                  <span className="text-xs text-red-600 font-medium">{litigations.filter((l: any) => l.casestatus === 'OPEN').length} open</span>
+                )}
+                {litigations.filter((l: any) => l.casejudgement === 'YES').length > 0 && (
+                  <span className="text-xs text-orange-500 font-medium">{litigations.filter((l: any) => l.casejudgement === 'YES').length} judgements</span>
+                )}
+              </div>
+            }
+          >
+            <div className="pt-3">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Lawsuits brought by NYC against this owner for failing to fix violations</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 dark:text-gray-400 border-b">
+                      <th className="pb-2 pr-2">Type</th>
+                      <th className="pb-2 pr-2">Opened</th>
+                      <th className="pb-2 pr-2">Status</th>
+                      <th className="pb-2 pr-2">Judgement</th>
+                      <th className="pb-2">Respondent</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {litigations.map((l: any, i: number) => (
+                      <tr key={i} className={`border-b border-gray-50 dark:border-gray-800 ${l.casestatus === 'OPEN' ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
+                        <td className="py-2 pr-2 text-xs">{l.casetype}</td>
+                        <td className="py-2 pr-2 text-xs">{l.caseopendate ? l.caseopendate.slice(0, 10) : "—"}</td>
+                        <td className="py-2 pr-2 text-xs">{l.casestatus}</td>
+                        <td className="py-2 pr-2 text-xs">{l.casejudgement || "—"}</td>
+                        <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate">{l.respondent}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Collapsible>
         )}
+
+        {/* Ownership Network (bottom) */}
+        <Collapsible
+          id="network"
+          title="Ownership Network"
+          defaultOpen={true}
+          badge={<span className="text-xs text-gray-400 dark:text-gray-500">Connected people, entities, and buildings</span>}
+        >
+          <div className="pt-3">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Traced through HPD registration records</p>
+            <OwnerNetwork centerName={ownerName} initialSelectedId={selectedNetworkNode || undefined} ownerMode={mode || undefined} comparisons={summary?.comparisons ? { avg_violations_per_building: summary.comparisons.avg_violations_per_building, avg_open_class_c_per_building: summary.comparisons.avg_open_class_c_per_building, violation_percentile: summary.comparisons.violation_percentile, penalty_percentile: summary.comparisons.penalty_percentile } : null} />
+          </div>
+        </Collapsible>
       </main>
     </div>
   );
