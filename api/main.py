@@ -476,8 +476,8 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     
     return {
         "building": building,
-        "latitude": latitude,
-        "longitude": longitude,
+        "latitude": latitude or (float(building['latitude']) if building.get('latitude') else None),
+        "longitude": longitude or (float(building['longitude']) if building.get('longitude') else None),
         "open_violations": open_violations,
         "ecb_violations": ecb_violations,
         "co_records": co_records,
@@ -1621,7 +1621,7 @@ def building_percentiles(bin_number: str):
                 count = cur.fetchone()['count']
                 results[key] = round(count / total * 100)
 
-        # Complaints percentile
+        # Complaints percentile (compared against ALL buildings, not just those with complaints)
         cur.execute("SELECT COUNT(*) as count FROM dob_complaints WHERE bin = %s", (bin_number,))
         complaint_count = cur.fetchone()['count']
         if complaint_count > 0:
@@ -1632,10 +1632,16 @@ def building_percentiles(bin_number: str):
                 SELECT COUNT(*) as count FROM bldg_complaints WHERE cnt <= %s
             """, (complaint_count,))
             below = cur.fetchone()['count']
+            # Add buildings with 0 complaints (in building_scores but not in dob_complaints)
+            cur.execute("SELECT COUNT(*) as count FROM building_scores")
+            total_buildings = cur.fetchone()['count']
             cur.execute("SELECT COUNT(DISTINCT bin) as count FROM dob_complaints")
-            total_with = cur.fetchone()['count']
-            if total_with > 0:
-                results["complaints"] = round(below / total_with * 100)
+            buildings_with_complaints = cur.fetchone()['count']
+            zero_complaint_buildings = total_buildings - buildings_with_complaints
+            # All zero-complaint buildings are "below" any building with complaints
+            total_below = below + zero_complaint_buildings
+            if total_buildings > 0:
+                results["complaints"] = round(total_below / total_buildings * 100)
 
         # Average age of open violations by class (for this building + city-wide)
         cur.execute("""
