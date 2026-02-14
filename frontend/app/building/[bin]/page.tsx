@@ -499,8 +499,9 @@ function BuildingPage() {
             {/* Apartment-specific subsection */}
             {apt && (() => {
               const aptViols = openViolations.filter((v: any) => v.is_unit_match);
+              if (aptViols.length === 0) return null;
               const aptOpen = aptViols.filter((v: any) => v.violationstatus === "Open");
-              const years = aptViols.length > 0 ? Math.max(1, Math.round((Date.now() - new Date(aptViols[aptViols.length - 1]?.inspectiondate || Date.now()).getTime()) / (365 * 86400000))) : 0;
+              const years = Math.max(1, Math.round((Date.now() - new Date(aptViols[aptViols.length - 1]?.inspectiondate || Date.now()).getTime()) / (365 * 86400000)));
               return (
                 <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">Apartment {apt}</h4>
