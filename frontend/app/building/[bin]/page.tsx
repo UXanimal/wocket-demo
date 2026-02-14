@@ -45,11 +45,14 @@ function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: strin
     }
   };
 
-  // On mobile: show first 2 paragraphs, "Read more" for rest. Desktop: show all.
-  const paragraphs = summary.split('\n\n').filter(Boolean);
-  const needsTruncation = isMobile && paragraphs.length > 2;
+  // Show ~40% of text by default, toggle to show full
+  const truncateAt = Math.ceil(summary.length * 0.4);
+  // Find a clean break point (end of sentence or paragraph) near the 40% mark
+  const breakPoint = summary.lastIndexOf('. ', truncateAt);
+  const cleanBreak = breakPoint > truncateAt * 0.5 ? breakPoint + 1 : truncateAt;
+  const needsTruncation = summary.length > 300;
   const displayText = (!expanded && needsTruncation)
-    ? paragraphs.slice(0, 2).join('\n\n') + '…'
+    ? summary.slice(0, cleanBreak).trim() + '…'
     : summary;
 
   return (
