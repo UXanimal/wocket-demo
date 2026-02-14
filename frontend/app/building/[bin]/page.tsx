@@ -7,7 +7,6 @@ import DetailDrawer from "../../components/DetailDrawer";
 import CodeGlossary from "../../components/CodeGlossary";
 import { redactSlurs } from "../../utils/redact";
 import BuildingSafetySummary from "../../components/BuildingSafetySummary";
-import PredictionCard from "../../components/PredictionCard";
 
 function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: string; updatedAt?: string }) {
   const [summary, setSummary] = useState(existing || "");
@@ -358,6 +357,64 @@ function BuildingPage() {
         {/* Building Safety Summary */}
         <BuildingSafetySummary data={data} />
 
+
+        {/* AI Summary */}
+        <AISummary bin={bin} existing={b.ai_summary} updatedAt={b.ai_summary_updated} />
+
+        {/* Building Identity + Map grid — map matches identity card height */}
+        <div className="grid md:grid-cols-[1fr_300px] gap-3 md:gap-4 items-stretch">
+          {/* Building Identity */}
+          <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Building Identity</h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-gray-500 dark:text-gray-400">BIN</span><div className="font-medium">{b.bin}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">BBL</span><div className="font-medium">{b.bbl || "—"}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">Block / Lot</span><div className="font-medium">{b.block || "—"} / {b.lot || "—"}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">Borough</span><div className="font-medium">{b.borough}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">ZIP</span><div className="font-medium">{b.zip || "—"}</div></div>
+              <div><span className="text-gray-500 dark:text-gray-400">Owner</span><div className="font-medium">{b.owner_name ? <Link href={`/owner/${encodeURIComponent(b.owner_name)}`} className="text-blue-600 hover:text-blue-800 hover:underline">{b.owner_name}</Link> : "—"}</div></div>
+            </div>
+          </div>
+
+          {/* Map — stretches to match Building Identity height */}
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
+            {data.latitude && data.longitude ? (
+              <>
+                <iframe
+                  key={`map-${data.latitude}-${data.longitude}`}
+                  id="building-map"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${data.longitude - 0.003},${data.latitude - 0.002},${data.longitude + 0.003},${data.latitude + 0.002}&layer=mapnik&marker=${data.latitude},${data.longitude}`}
+                  className="w-full h-full border-0 min-h-[200px]"
+                  loading="lazy"
+                  title="Map of property location"
+                />
+                {mapTouched ? (
+                  <button
+                    onClick={() => {
+                      const iframe = document.getElementById('building-map') as HTMLIFrameElement;
+                      if (iframe) { const src = iframe.src; iframe.src = ''; iframe.src = src; }
+                      setMapTouched(false);
+                    }}
+                    className="absolute bottom-[10px] left-[10px] bg-white border-2 border-gray-400/60 rounded-sm w-[30px] h-[30px] flex items-center justify-center text-base text-gray-700 hover:bg-gray-100 shadow-none z-10 cursor-pointer leading-none"
+                    title="Reset map view"
+                  >
+                    ⟲
+                  </button>
+                ) : (
+                  <div
+                    className="absolute inset-0 z-[5]"
+                    onPointerDown={() => setMapTouched(true)}
+                    style={{ pointerEvents: 'auto', background: 'transparent' }}
+                  />
+                )}
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm text-center p-4 min-h-[200px]">Map not available</div>
+            )}
+          </div>
+        </div>
+
+
         {/* Renter's Profile */}
         <Collapsible title="Renter's Profile" defaultOpen={true} badge={<span className="text-xs text-gray-500 dark:text-gray-400">Apartment Hunter Snapshot</span>}>
           <div className="mt-4">
@@ -426,11 +483,6 @@ function BuildingPage() {
                   </div>
                 );
               })()}
-              {/* Complaint Resolution - placeholder, filled by PredictionCard data */}
-              <div className="bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex items-start gap-2">
-                <span className="text-lg">📊</span>
-                <div><div className="text-xs text-gray-500 dark:text-gray-400">Complaint Resolution</div><div className="text-sm font-medium text-gray-900 dark:text-gray-100">See predictions below</div></div>
-              </div>
               {/* Landlord */}
               {(() => {
                 const lits = (data as any).litigations || [];
@@ -470,62 +522,6 @@ function BuildingPage() {
             </div>
           </div>
         </Collapsible>
-
-        {/* AI Summary */}
-        <AISummary bin={bin} existing={b.ai_summary} updatedAt={b.ai_summary_updated} />
-
-        {/* Building Identity + Map grid — map matches identity card height */}
-        <div className="grid md:grid-cols-[1fr_300px] gap-3 md:gap-4 items-stretch">
-          {/* Building Identity */}
-          <div className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Building Identity</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-gray-500 dark:text-gray-400">BIN</span><div className="font-medium">{b.bin}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">BBL</span><div className="font-medium">{b.bbl || "—"}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">Block / Lot</span><div className="font-medium">{b.block || "—"} / {b.lot || "—"}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">Borough</span><div className="font-medium">{b.borough}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">ZIP</span><div className="font-medium">{b.zip || "—"}</div></div>
-              <div><span className="text-gray-500 dark:text-gray-400">Owner</span><div className="font-medium">{b.owner_name ? <Link href={`/owner/${encodeURIComponent(b.owner_name)}`} className="text-blue-600 hover:text-blue-800 hover:underline">{b.owner_name}</Link> : "—"}</div></div>
-            </div>
-          </div>
-
-          {/* Map — stretches to match Building Identity height */}
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
-            {data.latitude && data.longitude ? (
-              <>
-                <iframe
-                  key={`map-${data.latitude}-${data.longitude}`}
-                  id="building-map"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${data.longitude - 0.003},${data.latitude - 0.002},${data.longitude + 0.003},${data.latitude + 0.002}&layer=mapnik&marker=${data.latitude},${data.longitude}`}
-                  className="w-full h-full border-0 min-h-[200px]"
-                  loading="lazy"
-                  title="Map of property location"
-                />
-                {mapTouched ? (
-                  <button
-                    onClick={() => {
-                      const iframe = document.getElementById('building-map') as HTMLIFrameElement;
-                      if (iframe) { const src = iframe.src; iframe.src = ''; iframe.src = src; }
-                      setMapTouched(false);
-                    }}
-                    className="absolute bottom-[10px] left-[10px] bg-white border-2 border-gray-400/60 rounded-sm w-[30px] h-[30px] flex items-center justify-center text-base text-gray-700 hover:bg-gray-100 shadow-none z-10 cursor-pointer leading-none"
-                    title="Reset map view"
-                  >
-                    ⟲
-                  </button>
-                ) : (
-                  <div
-                    className="absolute inset-0 z-[5]"
-                    onPointerDown={() => setMapTouched(true)}
-                    style={{ pointerEvents: 'auto', background: 'transparent' }}
-                  />
-                )}
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm text-center p-4 min-h-[200px]">Map not available</div>
-            )}
-          </div>
-        </div>
 
         {/* Certificate of Occupancy */}
         <Collapsible
@@ -971,8 +967,6 @@ function BuildingPage() {
           );
         })()}
 
-        {/* Complaint Resolution Predictions */}
-        <PredictionCard bin={bin} apiBase="" />
 
         {/* HPD Litigations */}
         {(() => {

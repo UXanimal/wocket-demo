@@ -83,7 +83,6 @@ function RentersReportPage() {
 
   const [data, setData] = useState<any>(null);
   const [percentiles, setPercentiles] = useState<any>(null);
-  const [predictions, setPredictions] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://wocket-demo-production-adad.up.railway.app";
@@ -93,11 +92,10 @@ function RentersReportPage() {
     Promise.all([
       fetch(url).then(r => r.json()).catch(() => null),
       fetch(`${apiBase}/api/building/${bin}/percentiles`).then(r => r.json()).catch(() => null),
-      fetch(`${apiBase}/api/building/${bin}/predictions`).then(r => r.json()).catch(() => null),
-    ]).then(([d, p, pred]) => {
+
+    ]).then(([d, p]) => {
       setData(d);
       setPercentiles(p);
-      setPredictions(pred);
     }).finally(() => setLoading(false));
   }, [bin, apt, apiBase]);
 
@@ -150,9 +148,6 @@ function RentersReportPage() {
   else if (countActive > 3 || workTypes.length > 1) constructionLevel = "Moderate";
   else if (countActive > 0) constructionLevel = "Minor";
 
-  // Predictions
-  const buildingAvgPredicted = predictions?.building_avg_predicted;
-  const cityAvg = predictions?.city_avg;
 
   // Litigations
   const openLit = litigations.filter((l: any) => l.casestatus === "OPEN");
@@ -261,23 +256,6 @@ function RentersReportPage() {
           <h2 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-2 mb-4">Complaint History</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <InfoCard label="Total Complaints" value={data.total_complaints || complaints.length} />
-            <InfoCard
-              label="Predicted Avg Resolution"
-              value={buildingAvgPredicted ? `${Math.round(buildingAvgPredicted)} days` : "N/A"}
-              sub={cityAvg ? `City avg: ${Math.round(cityAvg)} days` : undefined}
-            />
-            {buildingAvgPredicted && cityAvg ? (
-              <InfoCard
-                label="Compared to NYC"
-                value={buildingAvgPredicted < cityAvg
-                  ? `${Math.round(Math.abs(buildingAvgPredicted - cityAvg) / cityAvg * 100)}% faster`
-                  : buildingAvgPredicted > cityAvg
-                    ? `${Math.round(Math.abs(buildingAvgPredicted - cityAvg) / cityAvg * 100)}% slower`
-                    : "Average"}
-              />
-            ) : (
-              <InfoCard label="Compared to NYC" value="N/A" />
-            )}
           </div>
         </section>
 
