@@ -28,9 +28,17 @@ interface NetworkEdge {
   relation: string;
 }
 
+interface NetworkComparisons {
+  avg_violations_per_building?: { value: number; city_avg: number };
+  avg_open_class_c_per_building?: { value: number; city_avg: number };
+  violation_percentile?: { value: number; percentile: number };
+  penalty_percentile?: { value: number; percentile: number };
+}
+
 interface Props {
   centerName: string;
   initialSelectedId?: string;
+  comparisons?: NetworkComparisons | null;
 }
 
 const NODE_COLORS: Record<string, string> = { person: "#3b82f6", entity: "#8b5cf6", building: "#6b7280" };
@@ -41,7 +49,7 @@ function gradeBadge(g: string | undefined) {
   return cls;
 }
 
-export default function OwnerNetwork({ centerName, initialSelectedId }: Props) {
+export default function OwnerNetwork({ centerName, initialSelectedId, comparisons }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<any>(null);
   const fitRef = useRef<() => void>(() => {});
@@ -242,6 +250,39 @@ export default function OwnerNetwork({ centerName, initialSelectedId }: Props) {
             <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Entities</span><span className="font-medium text-gray-900 dark:text-gray-100">{data.stats.total_entities}</span></div>
             <div><span className="text-gray-500 dark:text-gray-400 text-xs">Boroughs</span><div className="text-xs font-medium text-gray-900 dark:text-gray-100">{data.stats.boroughs?.join(", ")}</div></div>
           </div>
+
+          {/* Network comparisons */}
+          {comparisons && (
+            <div className="space-y-2 text-xs border-t border-gray-200 dark:border-gray-700 pt-3">
+              <div className="text-gray-500 dark:text-gray-400 font-medium mb-1">vs. City Owners</div>
+              {comparisons.avg_violations_per_building && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Violations/bldg</span>
+                  <span className={`font-bold ${comparisons.avg_violations_per_building.value > comparisons.avg_violations_per_building.city_avg ? "text-red-500" : "text-green-500"}`}>
+                    {comparisons.avg_violations_per_building.value.toFixed(1)}
+                    <span className="text-gray-400 font-normal"> / {comparisons.avg_violations_per_building.city_avg.toFixed(1)}</span>
+                  </span>
+                </div>
+              )}
+              {comparisons.avg_open_class_c_per_building && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Class C/bldg</span>
+                  <span className={`font-bold ${comparisons.avg_open_class_c_per_building.value > comparisons.avg_open_class_c_per_building.city_avg ? "text-red-500" : "text-green-500"}`}>
+                    {comparisons.avg_open_class_c_per_building.value.toFixed(1)}
+                    <span className="text-gray-400 font-normal"> / {comparisons.avg_open_class_c_per_building.city_avg.toFixed(1)}</span>
+                  </span>
+                </div>
+              )}
+              {comparisons.violation_percentile && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Violation rank</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">
+                    Top {(100 - comparisons.violation_percentile.percentile).toFixed(0)}%
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Legend */}
           <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-2">

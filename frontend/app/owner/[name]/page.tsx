@@ -26,6 +26,12 @@ interface Building {
   longitude: number | null;
 }
 
+interface ComparisonStat {
+  value: number;
+  city_avg?: number;
+  percentile?: number;
+}
+
 interface Summary {
   total_buildings: number;
   total_open_class_c: number;
@@ -38,6 +44,15 @@ interface Summary {
   open_litigations: number;
   grade_distribution: Record<string, number>;
   boroughs: string[];
+  comparisons?: {
+    avg_violations_per_building: ComparisonStat;
+    avg_open_class_c_per_building: ComparisonStat;
+    avg_ecb_penalties_per_building: ComparisonStat;
+    pct_f_grade: ComparisonStat;
+    violation_percentile: ComparisonStat;
+    penalty_percentile: ComparisonStat;
+    litigation_rate: ComparisonStat;
+  };
 }
 
 function gradeColor(g: string | null) {
@@ -64,6 +79,29 @@ function fmt$(v: any) {
 }
 
 const GRADES = ["A", "B", "C", "D", "F"];
+
+function CompBar({ label, value, cityAvg, format = "number", higherIsWorse = true }: { label: string; value: number; cityAvg: number; format?: "number" | "dollar" | "percent"; higherIsWorse?: boolean }) {
+  const ratio = cityAvg > 0 ? value / cityAvg : 0;
+  const isWorse = higherIsWorse ? value > cityAvg : value < cityAvg;
+  const fmtVal = format === "dollar" ? fmt$(value) : format === "percent" ? `${value.toFixed(1)}%` : value.toFixed(1);
+  const fmtAvg = format === "dollar" ? fmt$(cityAvg) : format === "percent" ? `${cityAvg.toFixed(1)}%` : cityAvg.toFixed(1);
+  const pct = Math.min(ratio * 100, 200); // cap bar at 2x
+  const barColor = isWorse ? "bg-red-500" : "bg-green-500";
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs">
+        <span className="text-gray-600 dark:text-gray-300 font-medium">{label}</span>
+        <span className={`font-bold ${isWorse ? "text-red-600" : "text-green-600"}`}>{fmtVal}</span>
+      </div>
+      <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden">
+        <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(pct, 100)}%` }} />
+        {/* City avg marker */}
+        <div className="absolute top-0 h-full w-0.5 bg-gray-500 dark:bg-gray-400" style={{ left: `${Math.min(100 / (Math.max(ratio, 1) > 1 ? ratio : 1) * (cityAvg > 0 ? 1 : 0), 100)}%` }} />
+      </div>
+      <div className="text-[10px] text-gray-400 dark:text-gray-500">City avg: {fmtAvg}{ratio > 1.01 ? ` · ${ratio.toFixed(1)}× higher` : ratio < 0.99 ? ` · ${((1 - ratio) * 100).toFixed(0)}% lower` : ""}</div>
+    </div>
+  );
+}
 
 type SortKey = "address" | "borough" | "score_grade" | "open_class_c" | "total_hpd_violations" | "ecb_penalties" | "co_status";
 
@@ -207,7 +245,7 @@ function OwnerPage() {
                 <div className="text-xs text-gray-500 dark:text-gray-400">ECB Penalties</div>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4 mb-4">
               {/* Grade distribution */}
               <div className="flex items-center gap-1">
                 {GRADES.map((g) => {
@@ -232,6 +270,24 @@ function OwnerPage() {
                 )}
               </div>
             </div>
+
+            {/* Comparisons vs city-wide owners */}
+            {summary.comparisons && (
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Compared to NYC Owners (2+ buildings)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                  <CompBar label="Avg HPD Violations / Building" value={summary.comparisons.avg_violations_per_building.value} cityAvg={summary.comparisons.avg_violations_per_building.city_avg!} />
+                  <CompBar label="Avg Open Class C / Building" value={summary.comparisons.avg_open_class_c_per_building.value} cityAvg={summary.comparisons.avg_open_class_c_per_building.city_avg!} />
+                  <CompBar label="Avg ECB Penalties / Building" value={summary.comparisons.avg_ecb_penalties_per_building.value} cityAvg={summary.comparisons.avg_ecb_penalties_per_building.city_avg!} format="dollar" />
+                  <CompBar label="Litigations / Building" value={summary.comparisons.litigation_rate.value} cityAvg={summary.comparisons.litigation_rate.city_avg!} />
+                  <CompBar label="% Buildings Graded F" value={summary.comparisons.pct_f_grade.value} cityAvg={summary.comparisons.pct_f_grade.city_avg!} format="percent" />
+                </div>
+                <div className="flex gap-4 mt-3 text-xs text-gray-400 dark:text-gray-500">
+                  <span>Violations rank: top {(100 - (summary.comparisons.violation_percentile.percentile || 0)).toFixed(0)}% worst</span>
+                  <span>Penalties rank: top {(100 - (summary.comparisons.penalty_percentile.percentile || 0)).toFixed(0)}% worst</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -254,7 +310,7 @@ function OwnerPage() {
         <div id="network" className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-4 md:p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Ownership Network</h2>
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Connected people, entities, and buildings traced through HPD registration records</p>
-          <OwnerNetwork centerName={ownerName} initialSelectedId={selectedNetworkNode || undefined} />
+          <OwnerNetwork centerName={ownerName} initialSelectedId={selectedNetworkNode || undefined} comparisons={summary?.comparisons ? { avg_violations_per_building: summary.comparisons.avg_violations_per_building, avg_open_class_c_per_building: summary.comparisons.avg_open_class_c_per_building, violation_percentile: summary.comparisons.violation_percentile, penalty_percentile: summary.comparisons.penalty_percentile } : null} />
         </div>
 
         {/* Filters & Building List */}

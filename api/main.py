@@ -780,24 +780,136 @@ def get_owner_portfolio(
         total_litigations = max(total_litigations, len(litigation_records))
         open_litigations = sum(1 for l in litigation_records if l.get('casestatus') == 'OPEN')
     
+    # --- Comparison / percentile stats ---
+    owner_building_count = total_buildings if total_buildings else 1  # avoid /0
+
+    # Single query: city-wide averages (owners with 2+ buildings) and this owner's percentiles
+    cur.execute("""
+        WITH owner_stats AS (
+            SELECT
+                owner_name,
+                COUNT(*) AS bldg_count,
+                SUM(total_hpd_violations) AS sum_violations,
+                SUM(open_class_c) AS sum_open_c,
+                SUM(ecb_penalties) AS sum_penalties,
+                SUM(CASE WHEN score_grade = 'F' THEN 1 ELSE 0 END) AS f_count
+            FROM building_scores
+            WHERE owner_name IS NOT NULL
+            GROUP BY owner_name
+            HAVING COUNT(*) >= 2
+        ),
+        city AS (
+            SELECT
+                AVG(sum_violations::float / bldg_count) AS avg_viol_per_bldg,
+                AVG(sum_open_c::float / bldg_count) AS avg_open_c_per_bldg,
+                AVG(sum_penalties::float / bldg_count) AS avg_penalty_per_bldg,
+                AVG(f_count::float / bldg_count * 100) AS avg_pct_f,
+                COUNT(*) AS total_owners
+            FROM owner_stats
+        ),
+        ranked AS (
+            SELECT
+                owner_name,
+                PERCENT_RANK() OVER (ORDER BY sum_violations) AS viol_prank,
+                PERCENT_RANK() OVER (ORDER BY sum_penalties) AS penalty_prank
+            FROM owner_stats
+        )
+        SELECT
+            c.avg_viol_per_bldg,
+            c.avg_open_c_per_bldg,
+            c.avg_penalty_per_bldg,
+            c.avg_pct_f,
+            c.total_owners,
+            r.viol_prank,
+            r.penalty_prank
+        FROM city c
+        LEFT JOIN ranked r ON LOWER(r.owner_name) = LOWER(%s)
+    """, (name,))
+    comp_row = cur.fetchone()
+
+    # Litigation city-wide avg: avg litigations per building across owners with 2+ buildings
+    cur.execute("""
+        WITH owner_lit AS (
+            SELECT bs.owner_name, COUNT(DISTINCT hl.caseid) AS lit_count, COUNT(DISTINCT bs.bin) AS bldg_count
+            FROM building_scores bs
+            LEFT JOIN hpd_litigations hl ON hl.bin::text = bs.bin::text
+            WHERE bs.owner_name IS NOT NULL
+            GROUP BY bs.owner_name
+            HAVING COUNT(DISTINCT bs.bin) >= 2
+        )
+        SELECT AVG(lit_count::float / bldg_count) AS avg_lit_rate FROM owner_lit
+    """)
+    lit_row = cur.fetchone()
+    city_lit_rate = float(lit_row["avg_lit_rate"]) if lit_row and lit_row["avg_lit_rate"] else 0.0
+
     cur.close()
     conn.close()
-    
+
+    # Build comparisons dict
+    if comp_row and comp_row.get("avg_viol_per_bldg") is not None:
+        cr = comp_row
+        owner_avg_viol = total_hpd / owner_building_count
+        owner_avg_open_c = total_open_c / owner_building_count
+        owner_avg_penalty = total_ecb / owner_building_count
+        f_count = grade_dist.get("F", 0)
+        owner_pct_f = (f_count / owner_building_count) * 100
+        owner_lit_rate = total_litigations / owner_building_count
+
+        viol_pct = round((cr["viol_prank"] or 0) * 100, 1)
+        penalty_pct = round((cr["penalty_prank"] or 0) * 100, 1)
+
+        comparisons = {
+            "avg_violations_per_building": {
+                "value": round(owner_avg_viol, 2),
+                "city_avg": round(float(cr["avg_viol_per_bldg"]), 2),
+            },
+            "avg_open_class_c_per_building": {
+                "value": round(owner_avg_open_c, 2),
+                "city_avg": round(float(cr["avg_open_c_per_bldg"]), 2),
+            },
+            "avg_ecb_penalties_per_building": {
+                "value": round(owner_avg_penalty, 2),
+                "city_avg": round(float(cr["avg_penalty_per_bldg"]), 2),
+            },
+            "pct_f_grade": {
+                "value": round(owner_pct_f, 1),
+                "city_avg": round(float(cr["avg_pct_f"]), 1),
+            },
+            "violation_percentile": {
+                "value": total_hpd,
+                "percentile": viol_pct,
+            },
+            "penalty_percentile": {
+                "value": round(total_ecb, 2),
+                "percentile": penalty_pct,
+            },
+            "litigation_rate": {
+                "value": round(owner_lit_rate, 2),
+                "city_avg": round(city_lit_rate, 2),
+            },
+        }
+    else:
+        comparisons = None
+
+    summary = {
+        "total_buildings": total_buildings,
+        "total_open_class_c": total_open_c,
+        "total_hpd_violations": total_hpd,
+        "total_ecb_violations": total_ecb_violations,
+        "total_ecb_penalties": total_ecb,
+        "expired_tcos": expired_tcos_count,
+        "unsigned_jobs": unsigned_count,
+        "grade_distribution": grade_dist,
+        "boroughs": boroughs,
+        "total_litigations": total_litigations,
+        "open_litigations": open_litigations,
+    }
+    if comparisons:
+        summary["comparisons"] = comparisons
+
     return {
         "owner": name,
-        "summary": {
-            "total_buildings": total_buildings,
-            "total_open_class_c": total_open_c,
-            "total_hpd_violations": total_hpd,
-            "total_ecb_violations": total_ecb_violations,
-            "total_ecb_penalties": total_ecb,
-            "expired_tcos": expired_tcos_count,
-            "unsigned_jobs": unsigned_count,
-            "grade_distribution": grade_dist,
-            "boroughs": boroughs,
-            "total_litigations": total_litigations,
-            "open_litigations": open_litigations,
-        },
+        "summary": summary,
         "buildings": buildings,
         "litigations": litigation_records,
     }
