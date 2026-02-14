@@ -858,6 +858,282 @@ def search_owners(q: str = Query(..., min_length=2)):
     return {"results": all_results[:10], "count": len(all_results)}
 
 
+# ─── Owner Network ────────────────────────────────────────
+
+def _fuzzy_cluster_key(name: str) -> str:
+    """Normalize a corporate name for fuzzy clustering.
+    Strips common suffixes (LLC, CORP, INC, CO, LTD, LP, L.L.C., etc.),
+    removes punctuation, collapses whitespace, and lowercases.
+    Also normalizes common typos via simple phonetic-ish approach (just strip doubles).
+    """
+    if not name:
+        return ""
+    import re as _re
+    s = name.upper().strip()
+    # Remove common suffixes
+    s = _re.sub(r'\b(LLC|L\.?L\.?C\.?|CORP\.?|CORPORATION|INC\.?|INCORPORATED|CO\.?|COMPANY|LTD\.?|LIMITED|LP|L\.?P\.?|ASSOCIATES?|MGMT|MANAGEMENT|REALTY|REAL\s*ESTATE|PROPERTIES|GROUP|HOLDINGS?)\b', '', s)
+    # Remove punctuation
+    s = _re.sub(r'[^A-Z0-9\s]', '', s)
+    # Collapse whitespace
+    s = _re.sub(r'\s+', ' ', s).strip()
+    # Remove consecutive duplicate letters (helps with typos like EINENSTEIN vs EISENSTEIN)
+    # Actually, just return the cleaned version — true fuzzy matching below
+    return s
+
+
+def _cluster_entities(names: list) -> dict:
+    """Given a list of corporate names, return a mapping of original -> canonical.
+    Uses normalized keys to cluster similar names together."""
+    from difflib import SequenceMatcher
+    
+    key_map = {}  # normalized_key -> list of original names
+    for name in names:
+        if not name:
+            continue
+        key = _fuzzy_cluster_key(name)
+        if not key:
+            continue
+        # Try to find an existing cluster this belongs to
+        matched = False
+        for existing_key in list(key_map.keys()):
+            # Check similarity
+            if key == existing_key:
+                key_map[existing_key].append(name)
+                matched = True
+                break
+            ratio = SequenceMatcher(None, key, existing_key).ratio()
+            if ratio > 0.85:
+                key_map[existing_key].append(name)
+                matched = True
+                break
+        if not matched:
+            key_map[key] = [name]
+    
+    # Build original -> canonical mapping (canonical = most common variant)
+    result = {}
+    for key, variants in key_map.items():
+        # Pick the most common variant as canonical
+        from collections import Counter
+        canonical = Counter(variants).most_common(1)[0][0]
+        for v in variants:
+            result[v] = canonical
+    return result
+
+
+@app.get("/api/owner-network")
+def get_owner_network(name: str = Query(..., min_length=2)):
+    """Build a network graph of an owner/entity and their connected people, entities, and buildings."""
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    
+    name_parts = name.strip().split()
+    
+    # Step 1-4: Single big CTE query to get the full 2-hop network
+    # Build name matching conditions
+    contact_conditions = ["c.corporationname ILIKE %(name_pattern)s"]
+    params = {"name_pattern": f"%{name}%"}
+    
+    if len(name_parts) >= 2:
+        contact_conditions.append("(c.firstname ILIKE %(first)s AND c.lastname ILIKE %(last)s)")
+        params["first"] = f"%{name_parts[0]}%"
+        params["last"] = f"%{name_parts[-1]}%"
+    else:
+        contact_conditions.append("c.lastname ILIKE %(name_pattern)s")
+    
+    seed_where = " OR ".join(contact_conditions)
+    
+    cur.execute(f"""
+    WITH RECURSIVE
+    -- Step 1: Find seed registrations where this person/entity appears
+    seed_registrations AS (
+        SELECT DISTINCT c.registrationid
+        FROM hpd_contacts c
+        WHERE ({seed_where})
+          AND c.type != 'SiteManager'
+    ),
+    -- Step 2: Get BINs from seed registrations
+    seed_bins AS (
+        SELECT DISTINCT r.bin
+        FROM hpd_registrations r
+        JOIN seed_registrations sr ON r.registrationid = sr.registrationid
+        WHERE r.bin IS NOT NULL
+    ),
+    -- Step 3: Get ALL contacts on those registrations (1-hop)
+    hop1_contacts AS (
+        SELECT DISTINCT c.registrationcontactid, c.registrationid, c.type, c.contactdescription,
+               c.corporationname, c.firstname, c.lastname
+        FROM hpd_contacts c
+        JOIN hpd_registrations r ON c.registrationid = r.registrationid
+        JOIN seed_bins sb ON r.bin = sb.bin
+        WHERE c.type != 'SiteManager'
+    ),
+    -- Step 4: Find all OTHER registrations for hop1 people/entities (2-hop)
+    hop1_person_keys AS (
+        SELECT DISTINCT UPPER(TRIM(firstname)) as fn, UPPER(TRIM(lastname)) as ln
+        FROM hop1_contacts
+        WHERE firstname IS NOT NULL AND firstname != '' AND lastname IS NOT NULL AND lastname != ''
+    ),
+    hop1_entity_keys AS (
+        SELECT DISTINCT UPPER(TRIM(corporationname)) as corpname
+        FROM hop1_contacts
+        WHERE corporationname IS NOT NULL AND corporationname != ''
+    ),
+    hop2_registrations AS (
+        SELECT DISTINCT c.registrationid
+        FROM hpd_contacts c
+        WHERE c.type != 'SiteManager'
+          AND (
+            EXISTS (SELECT 1 FROM hop1_person_keys pk WHERE UPPER(TRIM(c.firstname)) = pk.fn AND UPPER(TRIM(c.lastname)) = pk.ln)
+            OR EXISTS (SELECT 1 FROM hop1_entity_keys ek WHERE UPPER(TRIM(c.corporationname)) = ek.corpname)
+          )
+    ),
+    -- All BINs in the network (seed + 2-hop)
+    all_network_bins AS (
+        SELECT DISTINCT r.bin
+        FROM hpd_registrations r
+        WHERE r.registrationid IN (SELECT registrationid FROM seed_registrations UNION SELECT registrationid FROM hop2_registrations)
+          AND r.bin IS NOT NULL
+        LIMIT 500
+    ),
+    -- All contacts across the full network
+    all_network_contacts AS (
+        SELECT DISTINCT c.registrationcontactid, c.registrationid, c.type, c.contactdescription,
+               c.corporationname, c.firstname, c.lastname, r.bin
+        FROM hpd_contacts c
+        JOIN hpd_registrations r ON c.registrationid = r.registrationid
+        JOIN all_network_bins ab ON r.bin = ab.bin
+        WHERE c.type != 'SiteManager'
+    )
+    -- Return contacts and building info
+    SELECT
+        nc.registrationcontactid, nc.type, nc.contactdescription,
+        nc.corporationname, nc.firstname, nc.lastname, nc.bin,
+        bs.address, bs.borough, bs.score_grade, bs.open_class_c,
+        bs.latitude, bs.longitude
+    FROM all_network_contacts nc
+    LEFT JOIN building_scores bs ON nc.bin = bs.bin
+    """, params)
+    
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    if not rows:
+        return {"center": name, "nodes": [], "edges": [], "stats": {"total_buildings": 0, "total_people": 0, "total_entities": 0, "boroughs": []}}
+    
+    # Process rows into nodes and edges
+    people = {}       # (fn, ln) -> {roles, bins}
+    entities = {}     # corpname -> {bins}
+    buildings = {}    # bin -> info
+    edges = []        # list of edge dicts
+    
+    all_corpnames = set()
+    for r in rows:
+        if r['corporationname']:
+            all_corpnames.add(r['corporationname'].strip().upper())
+    
+    # Cluster corporate names
+    corp_canonical = _cluster_entities(list(all_corpnames))
+    
+    for r in rows:
+        bin_val = str(r['bin']) if r['bin'] else None
+        
+        # Track building
+        if bin_val and bin_val not in buildings:
+            buildings[bin_val] = {
+                "address": r['address'] or '',
+                "borough": r['borough'] or '',
+                "score_grade": r['score_grade'] or '',
+                "open_class_c": r['open_class_c'],
+                "latitude": float(r['latitude']) if r['latitude'] else None,
+                "longitude": float(r['longitude']) if r['longitude'] else None,
+            }
+        
+        fn = (r['firstname'] or '').strip().upper()
+        ln = (r['lastname'] or '').strip().upper()
+        corp = (r['corporationname'] or '').strip().upper()
+        contact_desc = r['contactdescription'] or r['type'] or ''
+        
+        # Track person
+        if fn and ln:
+            key = (fn, ln)
+            if key not in people:
+                people[key] = {"roles": set(), "bins": set()}
+            people[key]["roles"].add(contact_desc)
+            if bin_val:
+                people[key]["bins"].add(bin_val)
+                # Edge: person -> building
+                edges.append({"source": f"person:{fn}_{ln}", "target": f"building:{bin_val}", "relation": contact_desc})
+        
+        # Track entity
+        if corp:
+            canonical = corp_canonical.get(corp, corp)
+            if canonical not in entities:
+                entities[canonical] = {"bins": set()}
+            if bin_val:
+                entities[canonical]["bins"].add(bin_val)
+                edges.append({"source": f"entity:{canonical.replace(' ', '_')}", "target": f"building:{bin_val}", "relation": contact_desc})
+            
+            # Edge: person -> entity (if both present on same registration)
+            if fn and ln:
+                edges.append({"source": f"person:{fn}_{ln}", "target": f"entity:{canonical.replace(' ', '_')}", "relation": contact_desc})
+    
+    # Deduplicate edges
+    seen_edges = set()
+    unique_edges = []
+    for e in edges:
+        key = (e["source"], e["target"], e["relation"])
+        if key not in seen_edges:
+            seen_edges.add(key)
+            unique_edges.append(e)
+    
+    # Build node list
+    nodes = []
+    for (fn, ln), info in people.items():
+        nodes.append({
+            "id": f"person:{fn}_{ln}",
+            "type": "person",
+            "label": f"{fn.title()} {ln.title()}",
+            "roles": sorted(info["roles"]),
+            "building_count": len(info["bins"]),
+        })
+    
+    for corp, info in entities.items():
+        nodes.append({
+            "id": f"entity:{corp.replace(' ', '_')}",
+            "type": "entity",
+            "label": corp.title(),
+            "building_count": len(info["bins"]),
+        })
+    
+    for bin_val, info in buildings.items():
+        nodes.append({
+            "id": f"building:{bin_val}",
+            "type": "building",
+            "label": info["address"],
+            "address": info["address"],
+            "borough": info["borough"],
+            "grade": info["score_grade"],
+            "open_class_c": info["open_class_c"],
+            "latitude": info["latitude"],
+            "longitude": info["longitude"],
+        })
+    
+    boroughs = sorted(set(b["borough"] for b in buildings.values() if b["borough"]))
+    
+    return {
+        "center": name.upper(),
+        "nodes": nodes,
+        "edges": unique_edges,
+        "stats": {
+            "total_buildings": len(buildings),
+            "total_people": len(people),
+            "total_entities": len(entities),
+            "boroughs": boroughs,
+        }
+    }
+
+
 # ─── Stats ────────────────────────────────────────────────
 
 @app.get("/api/explore/expired-tcos")
