@@ -6,6 +6,7 @@ import SearchBar from "../../components/SearchBar";
 import DetailDrawer from "../../components/DetailDrawer";
 import CodeGlossary from "../../components/CodeGlossary";
 import { redactSlurs } from "../../utils/redact";
+import BuildingSafetySummary from "../../components/BuildingSafetySummary";
 
 function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: string; updatedAt?: string }) {
   const [summary, setSummary] = useState(existing || "");
@@ -331,6 +332,9 @@ function BuildingPage() {
             <div className="text-sm text-gray-400 mb-4">Also known as: {unique.join(", ")}</div>
           ) : null;
         })()}
+
+        {/* Building Safety Summary */}
+        <BuildingSafetySummary data={data} />
 
         {/* AI Summary */}
         <AISummary bin={bin} existing={b.ai_summary} updatedAt={b.ai_summary_updated} />
