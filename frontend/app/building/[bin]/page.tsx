@@ -324,14 +324,14 @@ function BuildingPage() {
 
       <main className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-3 md:space-y-4">
         {/* Address title + grade */}
-        <div className="flex flex-wrap items-baseline gap-3 mb-1">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">
+        <div className="flex flex-wrap items-center gap-3 mb-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">
             {addrParam && addrParam !== b.address ? addrParam : b.address}
           </h1>
-          <span className={`text-xl sm:text-2xl md:text-3xl font-bold px-2.5 py-0.5 rounded-lg ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
+          <span className={`text-xl sm:text-2xl md:text-3xl font-bold px-2.5 leading-none rounded-lg ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
           <Link
             href={`/building/${bin}/report${qsStr}`}
-            className="ml-auto text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1.5"
+            className="ml-auto text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1.5 leading-none"
           >
             📄 Generate Report
           </Link>
