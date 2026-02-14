@@ -37,10 +37,10 @@ const PERMITS_GLOSSARY: GlossarySection[] = [
   {
     title: "Risk Tiers",
     entries: [
-      { code: "🔴 Critical", label: "High-risk work (plumbing/gas, sprinkler, structural, etc.) — permit expired, never signed off", color: "text-red-500" },
-      { code: "🟠 Expired", label: "Permit expired but work type is lower risk", color: "text-orange-400" },
-      { code: "🟡 Active", label: "Permit still active — work may be in progress", color: "text-yellow-400" },
-      { code: "🟢 Signed Off", label: "Work completed and inspected/signed off by DOB", color: "text-green-400" },
+      { code: "Critical", label: "High-risk work (plumbing/gas, sprinkler, structural, etc.) — permit expired, never signed off", color: "text-red-500" },
+      { code: "Expired", label: "Permit expired but work type is lower risk", color: "text-orange-500" },
+      { code: "Active", label: "Permit still active — work may be in progress", color: "text-yellow-500" },
+      { code: "Signed Off", label: "Work completed and inspected/signed off by DOB", color: "text-green-500" },
       { code: "⚪ Unknown", label: "Status could not be determined", color: "text-gray-400 dark:text-gray-500" },
     ],
   },
@@ -89,11 +89,11 @@ function PermitsPageInner() {
         columns={[
           { key: "risk_tier", label: "", sortable: false, render: (r) => {
             const tier = r.risk_tier || 'none';
-            if (tier === 'critical') return <span className="inline-block w-3 h-3 rounded-full bg-red-500" title="Critical — high-risk work, expired, uninspected" />;
-            if (tier === 'warning') return <span className="inline-block w-3 h-3 rounded-full bg-orange-400" title="Expired without sign-off" />;
-            if (tier === 'active') return <span className="inline-block w-3 h-3 rounded-full bg-yellow-400" title="Active — not yet signed off" />;
-            if (tier === 'clear') return <span className="inline-block w-3 h-3 rounded-full bg-green-400" title="Signed off" />;
-            return <span className="inline-block w-3 h-3 rounded-full bg-gray-200" title="Unknown" />;
+            if (tier === 'critical') return <span className="inline-block w-2 h-2 rounded-full bg-red-600 shrink-0" title="Critical — high-risk work, expired, uninspected" />;
+            if (tier === 'warning') return <span className="inline-block w-2 h-2 rounded-full bg-orange-500 shrink-0" title="Expired without sign-off" />;
+            if (tier === 'active') return <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 shrink-0" title="Active — not yet signed off" />;
+            if (tier === 'clear') return <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" title="Signed off" />;
+            return <span className="inline-block w-2 h-2 rounded-full bg-gray-400 shrink-0" title="Unknown" />;
           }},
           { key: "job", label: "Job #" },
           { key: "job_type", label: "Type" },
@@ -126,10 +126,10 @@ function PermitsPageInner() {
             { value: "true", label: "No Final Inspection" }
           ]},
           { key: "risk_tier", label: "Risk", options: [
-            { value: "critical", label: "🔴 Critical" },
-            { value: "warning", label: "🟠 Expired" },
-            { value: "active", label: "🟡 Active" },
-            { value: "clear", label: "🟢 Clear" },
+            { value: "critical", label: "Critical" },
+            { value: "warning", label: "Expired" },
+            { value: "active", label: "Active" },
+            { value: "clear", label: "Clear" },
           ]},
         ]}
         onRowClick={handleRowClick}

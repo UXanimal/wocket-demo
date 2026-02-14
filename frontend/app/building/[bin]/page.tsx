@@ -642,17 +642,17 @@ function BuildingPage() {
             </div>
             <div className="grid grid-cols-1 gap-2">
               {Object.entries(criticalByType).map(([wt, count]) => (
-                <Callout key={wt} label={`🔴 ${wt} — Expired, Never Inspected`} value={count} warn />
+                <Callout key={wt} label={`${wt} — Expired, Never Inspected`} value={count} warn />
               ))}
               {noInspectionCount > 0 && <Callout label="BIS Permits — No Final Inspection" value={noInspectionCount} warn />}
             </div>
           </div>
           <CodeGlossary sections={[
             { title: "Risk Tiers", entries: [
-              { code: "🔴 Critical", label: "High-risk work (gas, plumbing, sprinklers) — expired, never inspected", color: "text-red-500" },
-              { code: "🟠 Warning", label: "Permit expired without final signoff", color: "text-orange-500" },
-              { code: "🟡 Active", label: "Permit active, awaiting inspection", color: "text-yellow-500" },
-              { code: "🟢 Clear", label: "Work signed off / inspection passed" },
+              { code: "Critical", label: "High-risk work (gas, plumbing, sprinklers) — expired, never inspected", color: "text-red-500" },
+              { code: "Warning", label: "Permit expired without final signoff", color: "text-orange-500" },
+              { code: "Active", label: "Permit active, awaiting inspection", color: "text-yellow-500" },
+              { code: "Clear", label: "Work signed off / inspection passed", color: "text-green-500" },
             ]},
             { title: "Job Types", entries: [
               { code: "A1", label: "Alteration Type 1 — major structural change affecting use, egress, or occupancy" },
@@ -997,7 +997,7 @@ function BuildingPage() {
             { label: "Type", value: drawerItem.job_type },
             { label: "Work Type", value: drawerItem.work_type || "—" },
             { label: "Status", value: drawerItem.job_status_descrp },
-            { label: "Risk", value: drawerItem.risk_tier === 'critical' ? '🔴 Critical' : drawerItem.risk_tier === 'warning' ? '🟠 Expired' : drawerItem.risk_tier === 'active' ? '🟡 Active' : drawerItem.risk_tier === 'clear' ? '🟢 Signed Off' : '—' },
+            { label: "Risk", value: drawerItem.risk_tier === 'critical' ? 'Critical' : drawerItem.risk_tier === 'warning' ? 'Expired' : drawerItem.risk_tier === 'active' ? 'Active' : drawerItem.risk_tier === 'clear' ? 'Signed Off' : '—' },
             { label: "Last Action", value: formatDate(drawerItem.latest_action_date) },
             { label: "Description", value: drawerItem.job_description, full: true },
           ]}

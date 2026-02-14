@@ -217,7 +217,7 @@ export default function ExpiredTCOsPage() {
             <span>Grade:</span>
             {GRADES.map((g) => (
               <span key={g} className="flex items-center gap-1" >
-                <span className="inline-block w-3 h-3 rounded-full" style={{ background: g === "A" ? "#22c55e" : g === "B" ? "#3b82f6" : g === "C" ? "#eab308" : g === "D" ? "#f97316" : "#ef4444" }} />
+                <span className="inline-block w-2 h-2 rounded-full" style={{ background: g === "A" ? "#22c55e" : g === "B" ? "#3b82f6" : g === "C" ? "#eab308" : g === "D" ? "#f97316" : "#ef4444" }} />
                 {g}
               </span>
             ))}
