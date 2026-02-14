@@ -41,6 +41,13 @@ def normalize_address_query(q: str) -> str:
     """Expand common abbreviations and strip ordinals for flexible address search."""
     q = q.strip()
     
+    # Strip city/state/zip suffixes common in pasted addresses
+    # e.g. "251 West 92nd Street, New York, NY 10025" → "251 West 92nd Street"
+    q = re.sub(r',?\s*(?:New York|Manhattan|Brooklyn|Queens|Bronx|Staten Island)\b.*$', '', q, flags=re.IGNORECASE)
+    q = re.sub(r',?\s*NY\s*\d{5}(-\d{4})?$', '', q, flags=re.IGNORECASE)
+    q = re.sub(r',?\s*\d{5}(-\d{4})?$', '', q)
+    q = q.strip().rstrip(',')
+    
     # Direction abbreviations (word boundaries)
     dir_map = {
         r'\bw\b': 'WEST', r'\be\b': 'EAST', r'\bn\b': 'NORTH', r'\bs\b': 'SOUTH',
