@@ -206,8 +206,8 @@ function daysColor(days: number | null) {
 }
 
 function rowHighlight(v: any) {
-  if (v.is_unit_match) return "bg-blue-50 border-l-4 border-l-blue-500";
-  if (v.is_floor_match) return "bg-blue-50/40 border-l-4 border-l-blue-200";
+  if (v.is_unit_match) return "bg-blue-200 border-l-4 border-l-blue-600";
+  if (v.is_floor_match) return "bg-blue-100 border-l-4 border-l-blue-400";
   return "";
 }
 
