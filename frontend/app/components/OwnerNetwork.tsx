@@ -231,12 +231,12 @@ export default function OwnerNetwork({ centerName, initialSelectedId }: Props) {
 
   return (
     <div>
-      {/* Main layout: stats left, graph right */}
-      <div className="flex gap-4 flex-col md:flex-row">
+      {/* Main layout: stats left, graph right-aligned */}
+      <div className="flex gap-6 flex-col md:flex-row">
         {/* Left panel: stats + legend + building list */}
-        <div className="md:w-56 shrink-0 flex flex-col gap-3">
+        <div className="md:w-64 shrink-0 flex flex-col gap-4">
           {/* Stats */}
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm">
             <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Buildings</span><span className="font-medium text-gray-900 dark:text-gray-100">{data.stats.total_buildings}</span></div>
             <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">People</span><span className="font-medium text-gray-900 dark:text-gray-100">{data.stats.total_people}</span></div>
             <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Entities</span><span className="font-medium text-gray-900 dark:text-gray-100">{data.stats.total_entities}</span></div>
@@ -251,41 +251,12 @@ export default function OwnerNetwork({ centerName, initialSelectedId }: Props) {
             <div className="text-[10px] text-gray-400 mt-1">Click person/entity for buildings</div>
           </div>
 
-          {/* Sidebar building list */}
-          {selectedNode && (
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1117] overflow-hidden flex flex-col flex-1 min-h-0" style={{ maxHeight: 350 }}>
-              <div className="px-2.5 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between shrink-0">
-                <div className="min-w-0">
-                  <div className="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate">{selectedNode.label}</div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                    {selectedNode.type === "person" ? selectedNode.roles?.join(", ") : "Entity"} · {sidebarBuildings.length} bldg{sidebarBuildings.length !== 1 ? "s" : ""}
-                  </div>
-                </div>
-                <button onClick={() => { setSelectedNode(null); setSidebarBuildings([]); }} className="text-gray-400 hover:text-gray-600 text-sm leading-none ml-1">×</button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {sidebarBuildings.map((b) => {
-                  const bin = b.id.replace("building:", "");
-                  return (
-                    <Link key={bin} href={`/building/${bin}?${ownerBackParams}`} className="block px-2.5 py-1.5 border-b border-gray-50 dark:border-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${gradeBadge(b.grade)}`}>{b.grade || "?"}</span>
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-medium text-gray-900 dark:text-gray-100 truncate">{b.address || b.label}</div>
-                          <div className="text-[9px] text-gray-400">{b.borough}{(b.open_class_c || 0) > 0 ? ` · ${b.open_class_c} C` : ""}</div>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Placeholder for spacing when no selection */}
         </div>
 
-        {/* Right: Graph (square) */}
-        <div className="flex-1 min-w-0">
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-[#0a0b14] relative aspect-square max-h-[600px]">
+        {/* Right: Graph (square, right-aligned) */}
+        <div className="flex-1 min-w-0 flex justify-end">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-[#0a0b14] relative aspect-square max-h-[600px] w-full max-w-[600px]">
             <svg ref={svgRef} className="w-full h-full" />
             {/* Reset button */}
             <button
@@ -311,6 +282,41 @@ export default function OwnerNetwork({ centerName, initialSelectedId }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Expandable building list below graph (like violation/complaint detail panels) */}
+      {selectedNode && sidebarBuildings.length > 0 && (
+        <div className="mt-4 bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none overflow-hidden">
+          <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center gap-3">
+              <span className="text-gray-400 dark:text-gray-500 text-sm">▼</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedNode.label}</h3>
+              <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full font-medium">
+                {sidebarBuildings.length} building{sidebarBuildings.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+            <button onClick={() => { setSelectedNode(null); setSidebarBuildings([]); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg leading-none">×</button>
+          </div>
+          <div className="px-4 md:px-6 pb-4 md:pb-6">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 mb-3">
+              {selectedNode.type === "person" ? selectedNode.roles?.join(", ") : "Entity"} — connected buildings sorted by open Class C violations
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {sidebarBuildings.map((b) => {
+                const bin = b.id.replace("building:", "");
+                return (
+                  <Link key={bin} href={`/building/${bin}?${ownerBackParams}`} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${gradeBadge(b.grade)}`}>{b.grade || "?"}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{b.address || b.label}</div>
+                      <div className="text-xs text-gray-400">{b.borough}{(b.open_class_c || 0) > 0 ? ` · ${b.open_class_c} Class C` : ""}</div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
