@@ -76,9 +76,9 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
   if (tcoExpired) {
     tiles.push({
       value: tcoYearsOverdue ? `${tcoYearsOverdue}yr` : "Expired",
-      label: "TCO Overdue",
-      sublabel: "No valid Certificate of Occupancy",
-      color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
+      label: "No Valid C of O",
+      sublabel: "Operating on expired TCO — violates MDL §301",
+      color: "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300",
     });
   }
   if (openClassC > 0) {
