@@ -1579,7 +1579,29 @@ def building_percentiles(bin_number: str):
             if total_with > 0:
                 results["complaints"] = round(below / total_with * 100)
 
-        return {"percentiles": results}
+        # Average age of open violations by class (for this building + city-wide)
+        cur.execute("""
+            SELECT class, COUNT(*) as count,
+                   ROUND(AVG(CURRENT_DATE - novissueddate::date)) as avg_days_open
+            FROM hpd_violations
+            WHERE bin = %s AND violationstatus = 'Open' AND novissueddate IS NOT NULL
+            GROUP BY class ORDER BY class
+        """, (bin_number,))
+        building_ages = {r['class']: {"count": r['count'], "avg_days": int(r['avg_days_open'] or 0)} for r in cur.fetchall()}
+
+        cur.execute("""
+            SELECT class, ROUND(AVG(CURRENT_DATE - novissueddate::date)) as avg_days_open
+            FROM hpd_violations
+            WHERE violationstatus = 'Open' AND novissueddate IS NOT NULL AND class IN ('A','B','C')
+            GROUP BY class ORDER BY class
+        """)
+        city_ages = {r['class']: int(r['avg_days_open'] or 0) for r in cur.fetchall()}
+
+        return {
+            "percentiles": results,
+            "open_violation_ages": building_ages,
+            "city_avg_violation_ages": city_ages,
+        }
     finally:
         cur.close()
         conn.close()

@@ -16,11 +16,17 @@ function percentileLabel(pct: number): string | null {
 export default function BuildingSafetySummary({ data }: BuildingSafetySummaryProps) {
   const b = data.building;
   const [percentiles, setPercentiles] = useState<any>({});
+  const [violationAges, setViolationAges] = useState<any>({});
+  const [cityAvgAges, setCityAvgAges] = useState<any>({});
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://wocket-demo-production-adad.up.railway.app'}/api/building/${b.bin}/percentiles`)
       .then(r => r.json())
-      .then(d => setPercentiles(d.percentiles || {}))
+      .then(d => {
+        setPercentiles(d.percentiles || {});
+        setViolationAges(d.open_violation_ages || {});
+        setCityAvgAges(d.city_avg_violation_ages || {});
+      })
       .catch(() => {});
   }, [b.bin]);
 
@@ -76,10 +82,20 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
     });
   }
   if (openClassC > 0) {
+    const cAge = violationAges["C"];
+    const cCity = cityAvgAges["C"];
+    let cAgeSublabel = "Immediately hazardous — 24hr correction";
+    if (cAge?.avg_days) {
+      const months = Math.round(cAge.avg_days / 30);
+      cAgeSublabel += ` · Open avg ${months > 0 ? months + " months" : cAge.avg_days + " days"}`;
+      if (cCity && cAge.avg_days < cCity) {
+        cAgeSublabel += ` (city avg: ${Math.round(cCity / 30)} mo)`;
+      }
+    }
     tiles.push({
       value: String(openClassC),
       label: "Open Class C",
-      sublabel: "Immediately hazardous — 24hr correction",
+      sublabel: cAgeSublabel,
       color: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
       percentileKey: "class_c",
     });
@@ -101,10 +117,20 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
     });
   }
   if (openClassB > 0) {
+    const bAge = violationAges["B"];
+    const bCity = cityAvgAges["B"];
+    let bAgeSublabel = "Hazardous — 30-day correction";
+    if (bAge?.avg_days) {
+      const months = Math.round(bAge.avg_days / 30);
+      bAgeSublabel += ` · Open avg ${months > 0 ? months + " months" : bAge.avg_days + " days"}`;
+      if (bCity && bAge.avg_days < bCity) {
+        bAgeSublabel += ` (city avg: ${Math.round(bCity / 30)} mo)`;
+      }
+    }
     tiles.push({
       value: String(openClassB),
       label: "Open Class B",
-      sublabel: "Hazardous — 30-day correction",
+      sublabel: bAgeSublabel,
       color: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
     });
   }
