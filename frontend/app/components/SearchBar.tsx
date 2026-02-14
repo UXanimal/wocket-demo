@@ -87,7 +87,7 @@ export default function SearchBar({ large = false }: { large?: boolean }) {
         value={query}
         onChange={(e) => search(e.target.value)}
         onFocus={() => results.length > 0 && setShowDropdown(true)}
-        placeholder="Enter address to find an apartment or building"
+        placeholder="Search by address"
         className={`w-full border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#1a1b2e] text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm dark:shadow-none ${large ? "px-6 py-4 text-lg" : "px-4 py-3 text-base"}`}
       />
       {loading && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm">...</div>}
