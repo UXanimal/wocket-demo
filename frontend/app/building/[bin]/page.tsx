@@ -370,7 +370,7 @@ function BuildingPage() {
           defaultOpen={b.tco_expired}
           badge={
             b.tco_expired
-              ? <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">Expired TCO</span>
+              ? <Link href="/explore/expired-tcos" className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium hover:bg-red-200 transition-colors">Expired TCO</Link>
               : b.co_status === "TCO"
                 ? <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium">TCO</span>
                 : b.co_status === "Final"

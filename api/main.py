@@ -750,6 +750,80 @@ def search_owners(q: str = Query(..., min_length=2)):
 
 # ─── Stats ────────────────────────────────────────────────
 
+@app.get("/api/explore/expired-tcos")
+def explore_expired_tcos(
+    sort: Optional[str] = None,
+    order: Optional[str] = "desc",
+    grade: Optional[str] = None,
+    borough: Optional[str] = None,
+):
+    """Get all buildings with expired Temporary Certificates of Occupancy."""
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    
+    conditions = ["tco_expired = TRUE"]
+    params: list = []
+    
+    if grade:
+        conditions.append("score_grade = %s")
+        params.append(grade.upper())
+    if borough:
+        conditions.append("borough ILIKE %s")
+        params.append(f'%{borough}%')
+    
+    where = " AND ".join(conditions)
+    
+    sort_map = {
+        "grade": "score_grade",
+        "violations": "total_hpd_violations",
+        "penalties": "ecb_penalties",
+        "address": "address",
+        "open_class_c": "open_class_c",
+        "tco_date": "latest_tco_date",
+    }
+    sort_col = sort_map.get(sort or "", "latest_tco_date")
+    sort_dir = "ASC" if (order or "").lower() == "asc" else "DESC"
+    
+    cur.execute(f"""
+        SELECT bin, address, aliases, borough, zip, score_grade,
+            open_class_c, total_hpd_violations, total_ecb_violations,
+            ecb_penalties, co_status, tco_expired, latest_tco_date, unsigned_jobs, owner_name,
+            latitude, longitude
+        FROM building_scores
+        WHERE {where}
+        ORDER BY {sort_col} {sort_dir} NULLS LAST
+    """, params)
+    
+    buildings = cur.fetchall()
+    
+    total_buildings = len(buildings)
+    total_open_c = sum(b['open_class_c'] or 0 for b in buildings)
+    total_hpd = sum(b['total_hpd_violations'] or 0 for b in buildings)
+    total_ecb = sum(float(b['ecb_penalties'] or 0) for b in buildings)
+    unsigned_count = sum(b['unsigned_jobs'] or 0 for b in buildings)
+    grade_dist = {}
+    for b in buildings:
+        g = b['score_grade'] or '?'
+        grade_dist[g] = grade_dist.get(g, 0) + 1
+    boroughs = sorted(set(b['borough'] for b in buildings if b['borough']))
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        "summary": {
+            "total_buildings": total_buildings,
+            "total_open_class_c": total_open_c,
+            "total_hpd_violations": total_hpd,
+            "total_ecb_penalties": total_ecb,
+            "unsigned_jobs": unsigned_count,
+            "grade_distribution": grade_dist,
+            "boroughs": boroughs,
+        },
+        "buildings": buildings,
+    }
+
+
 @app.get("/api/stats")
 def get_stats():
     """Get overall database statistics."""
