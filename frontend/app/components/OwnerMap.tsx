@@ -103,9 +103,27 @@ export default function OwnerMap({ buildings }: { buildings: Building[] }) {
     );
   }
 
+  const resetView = () => {
+    if (!mapInstance.current || !markersRef.current) return;
+    const markers = markersRef.current.getLayers() as L.CircleMarker[];
+    if (markers.length > 0) {
+      const group = L.featureGroup(markers);
+      mapInstance.current.fitBounds(group.getBounds().pad(0.15));
+    }
+  };
+
   return (
     <div>
-      <div ref={mapRef} className="w-full h-80 md:h-96 rounded-xl border border-gray-200 dark:border-gray-700 z-0" />
+      <div className="relative">
+        <div ref={mapRef} className="w-full h-80 md:h-96 rounded-xl border border-gray-200 dark:border-gray-700 z-0" />
+        <button
+          onClick={resetView}
+          className="absolute top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm z-[1000]"
+          title="Reset map view"
+        >
+          ⟲ Reset
+        </button>
+      </div>
       {withCoords.length < buildings.length && (
         <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
           Showing {withCoords.length} of {buildings.length} properties on map ({buildings.length - withCoords.length} missing coordinates)

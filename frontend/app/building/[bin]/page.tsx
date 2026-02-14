@@ -358,14 +358,28 @@ function BuildingPage() {
           </div>
 
           {/* Map — stretches to match Building Identity height */}
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
             {data.latitude && data.longitude ? (
-              <iframe
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=${data.longitude - 0.003},${data.latitude - 0.002},${data.longitude + 0.003},${data.latitude + 0.002}&layer=mapnik&marker=${data.latitude},${data.longitude}`}
-                className="w-full h-full border-0 min-h-[200px]"
-                loading="lazy"
-                title="Map of property location"
-              />
+              <>
+                <iframe
+                  key={`map-${data.latitude}-${data.longitude}`}
+                  id="building-map"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${data.longitude - 0.003},${data.latitude - 0.002},${data.longitude + 0.003},${data.latitude + 0.002}&layer=mapnik&marker=${data.latitude},${data.longitude}`}
+                  className="w-full h-full border-0 min-h-[200px]"
+                  loading="lazy"
+                  title="Map of property location"
+                />
+                <button
+                  onClick={() => {
+                    const iframe = document.getElementById('building-map') as HTMLIFrameElement;
+                    if (iframe) { const src = iframe.src; iframe.src = ''; iframe.src = src; }
+                  }}
+                  className="absolute top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm z-10"
+                  title="Reset map view"
+                >
+                  ⟲ Reset
+                </button>
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm text-center p-4 min-h-[200px]">Map not available</div>
             )}
