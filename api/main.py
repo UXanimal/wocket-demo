@@ -238,6 +238,17 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     """, (bin_number,))
     co_records = cur.fetchall()
     
+    # First and latest TCO dates (for TCO duration calculation)
+    first_tco_date = None
+    latest_tco_date = None
+    if building.get('co_status') == 'TCO':
+        tco_records = [r for r in co_records if (r.get('issue_type') or '').upper() == 'TEMPORARY']
+        if tco_records:
+            dates = [r['c_o_issue_date'] for r in tco_records if r.get('c_o_issue_date')]
+            if dates:
+                first_tco_date = str(min(dates))
+                latest_tco_date = str(max(dates))
+
     # Extract lat/long from first record that has it
     latitude = longitude = None
     for rec in co_records:
@@ -502,6 +513,8 @@ def get_building(bin_number: str, apt: Optional[str] = None):
         "open_violations": open_violations,
         "ecb_violations": ecb_violations,
         "co_records": co_records,
+        "first_tco_date": first_tco_date,
+        "latest_tco_date": latest_tco_date,
         "permits": permits,
         "detailed_permits": detailed_permits,
         "bis_jobs": bis_jobs,

@@ -390,7 +390,7 @@ function ReportPage() {
           </div>
           <div style={{ fontSize: "11pt", lineHeight: "1.6" }}>
             <div>BIN: {b.bin || bin} &nbsp;|&nbsp; Block: {b.block} &nbsp;|&nbsp; Lot: {b.lot} &nbsp;|&nbsp; Borough: {b.borough}</div>
-            {config.apartmentFilter && <div style={{ fontSize: "14pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: "8px", border: "2px solid #111827", display: "inline-block", padding: "4px 16px" }}>Apartment {config.apartmentFilter}</div>}
+            {config.apartmentFilter && <div style={{ fontSize: "14pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: "8px", textDecoration: "underline", textDecorationThickness: "2px", textUnderlineOffset: "4px" }}>Apartment {config.apartmentFilter}</div>}
             {b.owner_name && config.includeOwnership && <div>Registered Owner (HPD): {b.owner_name}</div>}
             <div style={{ marginTop: "4px" }}>Report Generated: {generatedDate} at {generatedTime}</div>
           </div>
@@ -514,15 +514,31 @@ function ReportPage() {
             </h2>
             <div style={{ lineHeight: "2" }}>
               <div><span style={{ fontWeight: 600 }}>Status:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.co_status || "No record on file"}</span></div>
-              {b.latest_tco_date && <div><span style={{ fontWeight: 600 }}>Latest TCO Date:</span> {fmtDate(b.latest_tco_date)}</div>}
+              {data.first_tco_date && <div><span style={{ fontWeight: 600 }}>First TCO Issued:</span> {fmtDate(data.first_tco_date)}</div>}
+              {data.latest_tco_date && <div><span style={{ fontWeight: 600 }}>Latest TCO Renewal:</span> {fmtDate(data.latest_tco_date)}</div>}
+              {data.first_tco_date && (() => {
+                const first = new Date(data.first_tco_date);
+                const years = Math.floor((Date.now() - first.getTime()) / (365.25 * 86400000));
+                const months = Math.floor(((Date.now() - first.getTime()) / (30.44 * 86400000)) % 12);
+                return years > 0 ? (
+                  <div><span style={{ fontWeight: 600 }}>TCO Duration:</span> <span className={years >= 2 ? "text-red-600" : ""} style={years >= 2 ? { fontWeight: 600 } : ""}>{years} year{years !== 1 ? "s" : ""}{months > 0 ? `, ${months} month${months !== 1 ? "s" : ""}` : ""}</span></div>
+                ) : null;
+              })()}
               {b.co_status === "TCO" && <div><span style={{ fontWeight: 600 }}>TCO Expired:</span> <span className={b.tco_expired ? "text-red-600" : ""} style={b.tco_expired ? { fontWeight: 600 } : {}}>{b.tco_expired ? "YES" : "No"}</span></div>}
               {(data.unsigned_jobs || []).length > 0 && (
                 <div><span style={{ fontWeight: 600 }}>Unsigned Major Jobs:</span> {(data.unsigned_jobs || []).length} (A1/NB jobs without final signoff)</div>
               )}
               {b.tco_expired && (
-                <div style={{ marginTop: "8px", borderLeft: "2px solid #d1d5db", paddingLeft: "12px", fontSize: "11pt", fontStyle: "italic", color: "#4b5563" }}>
-                  Note: Under NYC Multiple Dwelling Law § 301, a building without a valid Certificate of Occupancy may not be legally occupied.
-                </div>
+                <>
+                  <div style={{ marginTop: "12px", lineHeight: "2" }}>
+                    <p style={{ textIndent: "2em", marginBottom: "8px" }}>
+                      Under New York Multiple Dwelling Law §301(4), a Temporary Certificate of Occupancy &ldquo;shall be effective for a period not to exceed ninety days from the date of issuance&rdquo; and &ldquo;may be renewed for like periods.&rdquo; However, per NYC Administrative Code §28-118.3.2, a TCO &ldquo;shall not be renewable and the department shall not issue a new temporary certificate of occupancy for a period in excess of two years from the date of issuance of the first temporary certificate of occupancy&rdquo; unless all outstanding violations and unsafe conditions have been resolved. A building operating beyond this two-year limit without obtaining a permanent Certificate of Occupancy is in violation of the law.
+                    </p>
+                    <p style={{ textIndent: "2em", marginBottom: "8px" }}>
+                      In <em>Kozak v. Kushner Companies, Inc.</em>, Index No. 153788/2016 (N.Y. Sup. Ct.), the court addressed a substantially similar factual pattern where a building operated on an expired TCO for an extended period while tenants were subjected to ongoing construction and hazardous conditions. The court held that tenants were entitled to relief where the landlord failed to obtain a permanent CO within the statutory timeframe, finding that continued occupancy under an expired TCO constitutes a material breach of the warranty of habitability.
+                    </p>
+                  </div>
+                </>
               )}
             </div>
             <div style={{ marginTop: "4px", fontSize: "8pt", color: "#374151" }}>Source: NYC Dept. of Buildings — Certificates of Occupancy (via NYC Open Data, dataset bs8b-p36w)</div>
