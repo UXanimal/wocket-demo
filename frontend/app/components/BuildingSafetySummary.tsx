@@ -204,7 +204,7 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
           );
 
           return t.href ? (
-            <Link key={i} href={t.href} className={`rounded-lg px-3 py-2.5 ${bgClasses} hover:opacity-80 transition-opacity cursor-pointer block`}>
+            <Link key={i} href={t.href} className={`rounded-lg px-3 py-2.5 ${bgClasses} hover:brightness-90 dark:hover:brightness-125 transition-all cursor-pointer block`}>
               {content}
             </Link>
           ) : (
