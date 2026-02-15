@@ -101,12 +101,24 @@ export default function BuildingTimeline({
 
   const laneY = (i: number) => i * (laneH + gap);
 
-  const show = (e: React.MouseEvent, lines: string[]) => {
+  const show = (e: React.MouseEvent | React.TouchEvent, lines: string[]) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    setTooltip({ x: e.clientX - rect.left, y: e.clientY - rect.top - 10, lines });
+    const touch = "touches" in e ? e.touches[0] : null;
+    const cx = touch ? touch.clientX : (e as React.MouseEvent).clientX;
+    const cy = touch ? touch.clientY : (e as React.MouseEvent).clientY;
+    let x = cx - rect.left;
+    x = Math.max(80, Math.min(x, width - 80));
+    setTooltip({ x, y: Math.max(40, cy - rect.top - 10), lines });
   };
   const hide = () => setTooltip(null);
+  // Helper: combined mouse+touch event props for SVG elements
+  const tip = (lines: string[]) => ({
+    onMouseMove: (e: React.MouseEvent) => show(e, lines),
+    onMouseLeave: hide,
+    onTouchStart: (e: React.TouchEvent) => { e.preventDefault(); show(e, lines); },
+    onTouchEnd: hide,
+  });
 
   // Penalty range for ECB sizing
   const penalties = ecbViolations.map((v) => parseFloat(v.penality_imposed) || 0);
@@ -150,15 +162,13 @@ export default function BuildingTimeline({
             elements.push(
               <rect key="tco-active" x={xScale(tcoStart)} y={y0 + 4} width={Math.max(1, xScale(tcoEnd) - xScale(tcoStart))} height={laneH - 8}
                 fill="#22c55e" opacity={0.3} rx={3}
-                onMouseMove={(e) => show(e, [`TCO Active: ${fmt(new Date(tcoStart))} – ${fmt(new Date(tcoEnd))}`])}
-                onMouseLeave={hide} />
+                {...tip([`TCO Active: ${fmt(new Date(tcoStart))} – ${fmt(new Date(tcoEnd))}`])} />
             );
             if (tcoExpired) {
               elements.push(
                 <rect key="tco-expired" x={xScale(tcoEnd)} y={y0 + 4} width={Math.max(1, xScale(now) - xScale(tcoEnd))} height={laneH - 8}
                   fill="#ef4444" opacity={0.3} rx={3}
-                  onMouseMove={(e) => show(e, [`TCO EXPIRED since ${fmt(new Date(tcoEnd))}`])}
-                  onMouseLeave={hide} />
+                  {...tip([`TCO EXPIRED since ${fmt(new Date(tcoEnd))}`])} />
               );
             }
           }
@@ -177,12 +187,11 @@ export default function BuildingTimeline({
           return (
             <rect key={`permit-${i}`} x={xScale(start)} y={y0 + 11} width={Math.max(2, xScale(end) - xScale(start))} height={8}
               fill={fill} opacity={signedOff ? 0.3 : 0.85} rx={3}
-              onMouseMove={(e) => show(e, [
+              {...tip([
                 `Permit: ${p.job_type || "Unknown"}`,
                 `${fmt(new Date(start))}${signedOff ? ` – ${fmt(new Date(end))}` : " – Active"}`,
                 signedOff ? "Signed off" : "In progress",
-              ])}
-              onMouseLeave={hide} />
+              ])} />
           );
         })}
 
@@ -197,12 +206,11 @@ export default function BuildingTimeline({
           return (
             <circle key={`hpd-${i}`} cx={xScale(t)} cy={y0 + laneH / 2} r={4}
               fill={fill} opacity={open ? 0.9 : 0.3}
-              onMouseMove={(e) => show(e, [
+              {...tip([
                 `HPD Class ${cls} – ${open ? "Open" : "Closed"}`,
                 fmt(new Date(t)),
                 v.novdescription?.slice(0, 80) || "",
-              ])}
-              onMouseLeave={hide} />
+              ])} />
           );
         })}
 
@@ -217,13 +225,12 @@ export default function BuildingTimeline({
           return (
             <circle key={`ecb-${i}`} cx={xScale(t)} cy={y0 + laneH / 2} r={r}
               fill="#a855f7" opacity={resolved ? 0.3 : 0.85}
-              onMouseMove={(e) => show(e, [
+              {...tip([
                 `ECB – ${resolved ? "Resolved" : "Active"}`,
                 fmt(new Date(t)),
                 pen > 0 ? `Penalty: $${pen.toLocaleString()}` : "No penalty",
                 v.violation_type?.slice(0, 60) || "",
-              ])}
-              onMouseLeave={hide} />
+              ])} />
           );
         })}
 
@@ -236,12 +243,11 @@ export default function BuildingTimeline({
           return (
             <circle key={`comp-${i}`} cx={xScale(t)} cy={y0 + laneH / 2} r={4}
               fill="#3b82f6" opacity={closed ? 0.3 : 0.85}
-              onMouseMove={(e) => show(e, [
+              {...tip([
                 `Complaint – ${closed ? "Closed" : "Active"}`,
                 fmt(new Date(t)),
                 c.complaint_category?.slice(0, 60) || "",
-              ])}
-              onMouseLeave={hide} />
+              ])} />
           );
         })}
       </svg>
