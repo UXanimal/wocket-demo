@@ -55,8 +55,8 @@ export default function DetailDrawer({ open, onClose, onPrev, onNext, title, sub
           <div className="flex items-center gap-2 min-w-0">
             {(onPrev || onNext) && (
               <div className="flex flex-col gap-0.5 shrink-0">
-                <button onClick={onPrev} disabled={!onPrev} className={`text-xs px-1.5 py-0.5 rounded ${onPrev ? 'text-gray-500 dark:text-gray-400 hover:bg-gray-100' : 'text-gray-200'}`}>▲</button>
-                <button onClick={onNext} disabled={!onNext} className={`text-xs px-1.5 py-0.5 rounded ${onNext ? 'text-gray-500 dark:text-gray-400 hover:bg-gray-100' : 'text-gray-200'}`}>▼</button>
+                <button onClick={onPrev} disabled={!onPrev} className={`text-sm md:text-xs px-2.5 py-1.5 md:px-1.5 md:py-0.5 rounded ${onPrev ? 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200' : 'text-gray-200 dark:text-gray-700'}`}>▲</button>
+                <button onClick={onNext} disabled={!onNext} className={`text-sm md:text-xs px-2.5 py-1.5 md:px-1.5 md:py-0.5 rounded ${onNext ? 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200' : 'text-gray-200 dark:text-gray-700'}`}>▼</button>
               </div>
             )}
             <div className="min-w-0">

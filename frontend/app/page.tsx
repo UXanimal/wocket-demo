@@ -14,7 +14,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-xl font-bold"><span className="font-nunito text-blue-600">Wocket</span> <span className="text-gray-400 dark:text-gray-500 font-normal text-sm">NYC Public Apartment Data</span></h1>
+        <h1 className="text-2xl md:text-xl font-bold"><span className="font-nunito text-blue-600">Wocket</span> <span className="text-gray-400 dark:text-gray-500 font-normal text-sm">NYC Public Apartment Data</span></h1>
         <a href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200">Legal</a>
       </header>
 

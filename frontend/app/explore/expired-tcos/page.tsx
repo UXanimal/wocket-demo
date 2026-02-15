@@ -152,7 +152,7 @@ export default function ExpiredTCOsPage() {
       {/* Header */}
       <header className="bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:py-4">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <Link href="/" className="text-blue-600 hover:text-blue-800 font-bold text-lg shrink-0 font-nunito">Wocket</Link>
+          <Link href="/" className="text-blue-600 hover:text-blue-800 font-bold text-2xl sm:text-xl shrink-0 font-nunito">Wocket</Link>
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-red-700">⚠ Expired Temporary Certificates of Occupancy</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Buildings operating on expired TCOs — potentially illegal occupancy under NYC Multiple Dwelling Law § 301</p>
