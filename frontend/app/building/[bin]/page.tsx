@@ -459,12 +459,12 @@ function BuildingPage() {
             /* Building view — no apt selected, show subtle dropdown button */
             <div className="border-b border-gray-100 dark:border-gray-800">
               <div className="max-w-5xl mx-auto px-3 md:px-4 py-2 relative">
-                <button
+                <span
                   onClick={() => setAptDropdownOpen(!aptDropdownOpen)}
-                  className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+                  className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer underline-offset-2 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
                 >
-                  Apartments {aptDropdownOpen ? "▲" : "▼"}
-                </button>
+                  Select apartment (optional)
+                </span>
                 {aptDropdownOpen && (
                   <div className="absolute top-full left-0 right-0 mt-0 bg-white dark:bg-[#1a1b2e] border border-gray-200 dark:border-gray-700 rounded-b-lg shadow-lg z-40">
                     <div className="max-w-5xl mx-auto px-3 md:px-4 py-3">
