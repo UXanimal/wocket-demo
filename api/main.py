@@ -1602,11 +1602,12 @@ def get_all_ecb(
     """, params + [per_page, offset])
     rows = cur.fetchall()
 
-    if apt:
-        apt_upper = apt.upper()
-        for v in rows:
-            desc = (v.get('violation_description') or '').upper()
-            v['is_unit_match'] = apt_upper in desc
+    for v in rows:
+        desc = v.get('violation_description') or ''
+        v['tags'] = tag_ecb_violation(desc)
+        v['extracted_apartments'] = extract_apartments_from_description(desc)
+        if apt:
+            v['is_unit_match'] = apt.upper() in desc.upper()
 
     cur.close()
     conn.close()

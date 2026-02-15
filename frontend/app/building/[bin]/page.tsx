@@ -124,14 +124,14 @@ function Collapsible({ title, subtitle, children, defaultOpen = false, badge, id
   }, [id]);
   return (
     <div ref={ref} id={id} className="bg-white dark:bg-[#1a1b2e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none overflow-hidden">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 md:px-6 py-3 md:py-4 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117] transition-colors text-left">
+      <div role="button" tabIndex={0} onClick={() => setOpen(!open)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(!open); } }} className="w-full flex items-center justify-between px-4 md:px-6 py-3 md:py-4 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117] transition-colors text-left cursor-pointer">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-gray-400 dark:text-gray-500 text-sm">{open ? "▼" : "▶"}</span>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
           {badge}
           {subtitle && open && <p className="w-full text-xs text-gray-400 dark:text-gray-500 ml-7 -mt-1 text-left inline-flex items-center gap-1.5">{subtitle}{glossary && <span onClick={(e) => e.stopPropagation()}>{glossary}</span>}</p>}
         </div>
-      </button>
+      </div>
       {open && <div className="px-4 md:px-6 pb-4 md:pb-6 border-t border-gray-100 dark:border-gray-800">{children}</div>}
     </div>
   );
@@ -1339,8 +1339,27 @@ function BuildingPage() {
             { label: "Balance Due", value: fmt$(drawerItem.balance_due) },
             { label: "Hearing Status", value: drawerItem.hearing_status },
             { label: "Description", value: drawerItem.violation_description, full: true },
-            ...(drawerItem.tags && drawerItem.tags.length > 0 ? [{ label: "Hazard Tags", value: drawerItem.tags.map((t: any) => `${t.icon} ${t.label}`).join("  ·  "), full: true }] : []),
-            ...(drawerItem.extracted_apartments && drawerItem.extracted_apartments.length > 0 ? [{ label: "Apartments Mentioned", value: drawerItem.extracted_apartments.join(", ") }] : []),
+            ...(drawerItem.tags && drawerItem.tags.length > 0 ? [{ label: "Hazard Tags", value: (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {drawerItem.tags.map((t: any, ti: number) => {
+                  const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
+                  return (
+                    <span key={ti} className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>
+                      {t.icon} {t.label}
+                    </span>
+                  );
+                })}
+              </div>
+            ), full: true }] : []),
+            ...(drawerItem.extracted_apartments && drawerItem.extracted_apartments.length > 0 ? [{ label: "Apartments Mentioned", value: (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {drawerItem.extracted_apartments.map((apt: string, ai: number) => (
+                  <span key={ai} className="inline-flex items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    🏠 {apt}
+                  </span>
+                ))}
+              </div>
+            ) }] : []),
           ]}
         />
       )}

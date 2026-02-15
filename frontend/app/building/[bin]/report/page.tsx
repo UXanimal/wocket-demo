@@ -206,6 +206,50 @@ function ReportPage() {
   // ─── Class C violations count ───
   const classCCount = hpdViolations.filter((v: any) => (v.class || "").toUpperCase() === "C").length;
 
+  // ─── ECB hazard helpers ───
+  const HIGH_SEVERITY_TAG_IDS = ["fire-stopping", "asbestos", "lead", "structural", "egress"];
+
+  const ecbWithHighSeverity = ecbViolations.filter((v: any) =>
+    (v.tags || []).some((t: any) => HIGH_SEVERITY_TAG_IDS.includes(t.id))
+  );
+
+  const highSeverityTagLabels = [...new Set(
+    ecbWithHighSeverity.flatMap((v: any) =>
+      (v.tags || []).filter((t: any) => HIGH_SEVERITY_TAG_IDS.includes(t.id)).map((t: any) => t.label)
+    )
+  )] as string[];
+
+  function tagPillStyle(tagId: string): React.CSSProperties {
+    const isHigh = HIGH_SEVERITY_TAG_IDS.includes(tagId);
+    return {
+      display: "inline-block",
+      fontSize: "7.5pt",
+      lineHeight: "1.3",
+      padding: "1px 5px",
+      borderRadius: "3px",
+      marginRight: "3px",
+      marginTop: "2px",
+      backgroundColor: isHigh ? "#FEE2E2" : "#FEF9C3",
+      color: isHigh ? "#991B1B" : "#854D0E",
+      border: isHigh ? "1px solid #FECACA" : "1px solid #FDE68A",
+      fontFamily: "Inter, system-ui, sans-serif",
+    };
+  }
+
+  const aptPillStyle: React.CSSProperties = {
+    display: "inline-block",
+    fontSize: "7.5pt",
+    lineHeight: "1.3",
+    padding: "1px 5px",
+    borderRadius: "3px",
+    marginRight: "3px",
+    marginTop: "2px",
+    backgroundColor: "#F3F4F6",
+    color: "#374151",
+    border: "1px solid #D1D5DB",
+    fontFamily: "Inter, system-ui, sans-serif",
+  };
+
   // ─── Legal Summary Builder ───
   function buildLegalSummary(): string {
     const parts: string[] = [];
@@ -255,6 +299,11 @@ function ReportPage() {
       } else {
         parts.push(`This report has been filtered to records pertaining to Apartment ${config.apartmentFilter}.`);
       }
+    }
+
+    // Hazardous ECB findings
+    if (ecbWithHighSeverity.length > 0 && config.includeEcb) {
+      parts.push(`Among the ECB violations, ${ecbWithHighSeverity.length} involve hazardous conditions including ${highSeverityTagLabels.join(", ")}, which may pose immediate risks to building occupants.`);
     }
 
     parts.push("The complete record follows below.");
@@ -425,7 +474,11 @@ function ReportPage() {
           const aptClassB = aptHpdOpen.filter((v: any) => (v.class || "").toUpperCase() === "B");
           const aptComplaints = complaints.filter((c: any) => (c.unit || "").toUpperCase().includes(aptUpper));
           const aptActiveComplaints = aptComplaints.filter((c: any) => c.status === "ACTIVE");
-          const hasIssues = aptHpdOpen.length > 0 || aptActiveComplaints.length > 0;
+          const aptEcbHazard = ecbViolations.filter((v: any) =>
+            (v.tags || []).length > 0 &&
+            (v.extracted_apartments || []).some((a: string) => a.toUpperCase() === aptUpper)
+          );
+          const hasIssues = aptHpdOpen.length > 0 || aptActiveComplaints.length > 0 || aptEcbHazard.length > 0;
 
           if (!hasIssues) return null;
 
@@ -496,6 +549,43 @@ function ReportPage() {
                           <td className="py-1 pr-2">{fmtDate(c.date_entered)}</td>
                           <td className="py-1 pr-2">{c.complaint_category}</td>
                           <td className="py-1">{c.category_description || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {aptEcbHazard.length > 0 && (
+                <div style={{ marginTop: "12px" }}>
+                  <h3 style={{ fontSize: "11pt", fontWeight: "bold", marginBottom: "4px" }}>
+                    ECB Hazard Violations ({aptEcbHazard.length})
+                  </h3>
+                  <table className="w-full border-collapse" style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "9pt", lineHeight: "1.4" }}>
+                    <thead>
+                      <tr className="border-b border-gray-400 text-left">
+                        <th className="pb-1 pr-2 font-semibold">ECB #</th>
+                        <th className="pb-1 pr-2 font-semibold">Date</th>
+                        <th className="pb-1 pr-2 font-semibold">Status</th>
+                        <th className="pb-1 pr-2 font-semibold">Penalty</th>
+                        <th className="pb-1 font-semibold">Tags / Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {aptEcbHazard.map((v: any, i: number) => (
+                        <tr key={i} className="border-b border-gray-100">
+                          <td className="py-1 pr-2">{v.ecb_violation_number}</td>
+                          <td className="py-1 pr-2">{fmtDate(v.issue_date)}</td>
+                          <td className="py-1 pr-2">{v.ecb_violation_status}</td>
+                          <td className="py-1 pr-2">{fmt$(v.penality_imposed)}</td>
+                          <td className="py-1">
+                            <div style={{ marginBottom: "2px" }}>
+                              {(v.tags || []).map((t: any, ti: number) => (
+                                <span key={ti} style={tagPillStyle(t.id)}>{t.icon} {t.label}</span>
+                              ))}
+                            </div>
+                            {v.violation_description}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -607,7 +697,23 @@ function ReportPage() {
                     <td className="py-1 pr-2">{fmtDate(v.issue_date)}</td>
                     <td className="py-1 pr-2">{v.ecb_violation_status}</td>
                     <td className="py-1 pr-2">{fmt$(v.penality_imposed)}</td>
-                    <td className="py-1">{v.violation_description}</td>
+                    <td className="py-1">
+                      {v.violation_description}
+                      {(v.tags || []).length > 0 && (
+                        <div style={{ marginTop: "2px" }}>
+                          {(v.tags || []).map((t: any, ti: number) => (
+                            <span key={ti} style={tagPillStyle(t.id)}>{t.icon} {t.label}</span>
+                          ))}
+                        </div>
+                      )}
+                      {(v.extracted_apartments || []).length > 0 && (
+                        <div style={{ marginTop: "2px" }}>
+                          {(v.extracted_apartments || []).map((apt: string, ai: number) => (
+                            <span key={ai} style={aptPillStyle}>Apt {apt}</span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
