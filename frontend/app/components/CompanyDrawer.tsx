@@ -211,10 +211,12 @@ export default function CompanyDrawer({ open, onClose, companyName, currentBin }
                     <div>
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{b.address || b.bin}</div>
                       <div className="text-gray-400">{b.borough}</div>
-                      {(b.corporate_owner || b.individual_owner) && (
+                      {(b.corporate_owner || b.individual_owner || b.agent_name || b.head_officer) && (
                         <div className="mt-1 text-gray-500 dark:text-gray-400">
                           {b.corporate_owner && <div>{b.corporate_owner}</div>}
-                          {b.individual_owner && <div className="text-gray-400">{b.individual_owner}</div>}
+                          {b.individual_owner && <div>Owner: {b.individual_owner}</div>}
+                          {b.head_officer && <div>Head Officer: {b.head_officer}</div>}
+                          {b.agent_name && <div>Agent: {b.agent_name}</div>}
                         </div>
                       )}
                     </div>
