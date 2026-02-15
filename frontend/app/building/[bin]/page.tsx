@@ -1473,6 +1473,10 @@ function BuildingPage() {
             { label: "Status", value: drawerItem.job_status_descrp },
             { label: "Risk", value: drawerItem.risk_tier === 'critical' ? 'Critical' : drawerItem.risk_tier === 'high' ? 'High' : drawerItem.risk_tier === 'warning' ? 'Warning' : drawerItem.risk_tier === 'low' ? 'Low' : drawerItem.risk_tier === 'clear' ? 'Signed Off' : drawerItem.risk_tier === 'none' ? 'None' : '—' },
             { label: "Last Action", value: formatDate(drawerItem.latest_action_date) },
+            { label: "Applicant/Contractor", value: drawerItem.applicant_business_name || "—" },
+            { label: "License #", value: drawerItem.applicant_license || "—" },
+            { label: "Floor", value: drawerItem.work_on_floor || "—" },
+            { label: "Estimated Cost", value: drawerItem.estimated_job_costs ? `$${Number(drawerItem.estimated_job_costs).toLocaleString()}` : "—" },
             { label: "Description", value: drawerItem.job_description, full: true },
           ]}
         />

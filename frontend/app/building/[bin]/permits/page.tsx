@@ -166,6 +166,10 @@ function PermitsPageInner() {
           { label: "Existing Dwelling Units", value: selected.existing_dwelling_units },
           { label: "Proposed Dwelling Units", value: selected.proposed_dwelling_units },
           { label: "Owner", value: [selected.owner_first_name, selected.owner_last_name].filter(Boolean).join(" ") || selected.owner_business_name || "—" },
+          { label: "Applicant/Contractor", value: selected.applicant_business_name || "—" },
+          { label: "License #", value: selected.applicant_license || "—" },
+          { label: "Floor", value: selected.work_on_floor || "—" },
+          { label: "Estimated Cost", value: selected.estimated_job_costs ? `$${Number(selected.estimated_job_costs).toLocaleString()}` : "—" },
           { label: "Description", value: selected.job_description, full: true },
         ] : []}
       />

@@ -562,7 +562,8 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     # Build lookup of DOB NOW permit details for risk tiers
     dobnow_detail = {}
     cur.execute("""
-        SELECT job_filing_number, work_type, permit_status, expired_date
+        SELECT job_filing_number, work_type, permit_status, expired_date,
+               applicant_business_name, applicant_license, work_on_floor, estimated_job_costs
         FROM dobnow_permits WHERE bin = %s
     """, (bin_number,))
     for dp in cur.fetchall():
@@ -593,6 +594,10 @@ def get_building(bin_number: str, apt: Optional[str] = None):
             expired_date = dp.get('expired_date')
             is_expired = bool(expired_date) and expired_date < today
             j['work_type'] = wt
+            j['applicant_business_name'] = dp.get('applicant_business_name')
+            j['applicant_license'] = dp.get('applicant_license')
+            j['work_on_floor'] = dp.get('work_on_floor')
+            j['estimated_job_costs'] = dp.get('estimated_job_costs')
             if is_dp_signed:
                 j['risk_tier'] = 'clear'
             elif is_expired and expired_date:
@@ -688,10 +693,27 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     for c in complaints:
         c['category_description'] = COMPLAINT_CATEGORIES.get(c.get('complaint_category', ''), c.get('complaint_category', ''))
         c['disposition_description'] = DISPOSITION_CODES.get(c.get('disposition_code', ''), c.get('disposition_code', ''))
-        c['tags'] = tag_complaint(c.get('complaint_category', ''))
+        # Combine category-based tags with description-based tags
+        cat_tags = tag_complaint(c.get('complaint_category', ''))
+        # Also scan BISweb description + category_full for keyword-based tags
+        desc_text = ''
+        bw_tag = bisweb_map.get(c.get('complaint_number'))
+        if bw_tag:
+            desc_text = ' '.join(filter(None, [bw_tag.get('description', ''), bw_tag.get('comments', ''), bw_tag.get('category_full', '')]))
+        desc_tags = tag_ecb_violation(desc_text)
+        # Merge, deduplicate by tag id
+        seen_ids = set()
+        merged_tags = []
+        for t in cat_tags + desc_tags:
+            if t['id'] not in seen_ids:
+                seen_ids.add(t['id'])
+                merged_tags.append(t)
+        c['tags'] = merged_tags
         bw = bisweb_map.get(c.get('complaint_number'))
         if bw:
             c['bisweb'] = {k: v for k, v in bw.items() if v is not None}
+            if bw.get('category_full'):
+                c['category_description'] = bw['category_full']
 
     # HPD contacts (owner, agent, officer, manager)
     cur.execute("""
@@ -2003,10 +2025,27 @@ def get_all_complaints(
     for r in rows:
         r['category_description'] = COMPLAINT_CATEGORIES.get(r.get('complaint_category', ''), r.get('complaint_category', ''))
         r['disposition_description'] = DISPOSITION_CODES.get(r.get('disposition_code', ''), r.get('disposition_code', ''))
-        r['tags'] = tag_complaint(r.get('complaint_category', ''))
+        # Combine category-based tags with description-based tags
+        cat_tags = tag_complaint(r.get('complaint_category', ''))
+        # Also scan BISweb description + category_full for keyword-based tags
+        desc_text = ''
+        bw_tag = bisweb_map.get(r.get('complaint_number'))
+        if bw_tag:
+            desc_text = ' '.join(filter(None, [bw_tag.get('description', ''), bw_tag.get('comments', ''), bw_tag.get('category_full', '')]))
+        desc_tags = tag_ecb_violation(desc_text)
+        # Merge, deduplicate by tag id
+        seen_ids = set()
+        merged_tags = []
+        for t in cat_tags + desc_tags:
+            if t['id'] not in seen_ids:
+                seen_ids.add(t['id'])
+                merged_tags.append(t)
+        r['tags'] = merged_tags
         bw = bisweb_map.get(r.get('complaint_number'))
         if bw:
             r['bisweb'] = {k: v for k, v in bw.items() if v is not None}
+            if bw.get('category_full'):
+                r['category_description'] = bw['category_full']
 
     cur.close()
     conn.close()
@@ -2060,7 +2099,8 @@ def get_all_permits(
     try:
         cur2 = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur2.execute("""
-            SELECT job_filing_number, work_type, permit_status, issued_date, expired_date
+            SELECT job_filing_number, work_type, permit_status, issued_date, expired_date,
+                   applicant_business_name, applicant_license, work_on_floor, estimated_job_costs
             FROM dobnow_permits WHERE bin = %s
         """, (bin_number,))
         for p in cur2.fetchall():
@@ -2134,6 +2174,10 @@ def get_all_permits(
             j['signed_off'] = is_signed
             j['no_final_inspection'] = not is_signed and is_expired
             j['work_type'] = wt
+            j['applicant_business_name'] = pinfo.get('applicant_business_name')
+            j['applicant_license'] = pinfo.get('applicant_license')
+            j['work_on_floor'] = pinfo.get('work_on_floor')
+            j['estimated_job_costs'] = pinfo.get('estimated_job_costs')
             expired_date = pinfo.get('expired_date')
             if is_signed:
                 j['risk_tier'] = 'clear'
