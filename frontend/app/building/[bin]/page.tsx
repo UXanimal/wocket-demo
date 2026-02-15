@@ -338,99 +338,156 @@ function BuildingPage() {
         </div>
       </header>
 
-      {apt && data && (() => {
-        const hpdMatches = (data.open_violations || []).filter((v: any) => v.is_unit_match);
-        const ecbMatches = (data.ecb_violations || []).filter((v: any) => v.is_unit_match);
-        const hpdOpen = hpdMatches.filter((v: any) => v.violationstatus === "Open");
-        const hpdClassC = hpdOpen.filter((v: any) => v.class === "C");
-        // Collect hazardous ECB violations with tags
-        const hazardousEcb = ecbMatches.filter((v: any) => (v.tags || []).length > 0 && !['RESOLVE', 'DISMISS'].includes((v.ecb_violation_status || '').toUpperCase()));
-        const allTags = new Map<string, { icon: string; label: string; violations: any[] }>();
-        for (const v of hazardousEcb) {
-          for (const t of v.tags || []) {
-            if (!allTags.has(t.id)) allTags.set(t.id, { icon: t.icon, label: t.label, violations: [] });
-            allTags.get(t.id)!.violations.push(v);
-          }
-        }
-        // Priority order for hazard tags
-        const hazardPriority = ["fire-stopping", "asbestos", "lead", "structural", "egress", "no-permit", "electrical", "plumbing", "mold", "pest", "facade", "elevator", "occupied"];
-        const sortedTags = [...allTags.entries()].sort((a, b) => {
-          const ai = hazardPriority.indexOf(a[0]);
-          const bi = hazardPriority.indexOf(b[0]);
-          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-        });
+      {/* Merged Apartment Selector + Header */}
+      {availableApts.length > 0 && (
+        <div ref={aptDropdownRef}>
+          {apt && data ? (() => {
+            const hpdMatches = (data.open_violations || []).filter((v: any) => v.is_unit_match);
+            const ecbMatches = (data.ecb_violations || []).filter((v: any) => v.is_unit_match);
+            const hpdOpen = hpdMatches.filter((v: any) => v.violationstatus === "Open");
+            const hpdClassC = hpdOpen.filter((v: any) => v.class === "C");
+            const hazardousEcb = ecbMatches.filter((v: any) => (v.tags || []).length > 0 && !['RESOLVE', 'DISMISS'].includes((v.ecb_violation_status || '').toUpperCase()));
+            const allTags = new Map<string, { icon: string; label: string; violations: any[] }>();
+            for (const v of hazardousEcb) {
+              for (const t of v.tags || []) {
+                if (!allTags.has(t.id)) allTags.set(t.id, { icon: t.icon, label: t.label, violations: [] });
+                allTags.get(t.id)!.violations.push(v);
+              }
+            }
+            const hazardPriority = ["fire-stopping", "asbestos", "lead", "structural", "egress", "no-permit", "electrical", "plumbing", "mold", "pest", "facade", "elevator", "occupied"];
+            const sortedTags = [...allTags.entries()].sort((a, b) => {
+              const ai = hazardPriority.indexOf(a[0]);
+              const bi = hazardPriority.indexOf(b[0]);
+              return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+            });
 
-        return (
-          <>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
-              <div className="max-w-5xl mx-auto px-3 md:px-4 py-3 flex items-center gap-3">
-                <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-lg">Apt {apt}</span>
-                <span className="text-blue-700 dark:text-blue-300 text-sm">Apartment-specific violations are highlighted below</span>
-              </div>
-            </div>
-            {/* Apartment Summary */}
-            {(hpdMatches.length > 0 || ecbMatches.length > 0) && (
-              <div className="bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700">
-                <div className="max-w-5xl mx-auto px-3 md:px-4 py-4">
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Apartment {apt} — Summary</h2>
-                  <div className="flex flex-wrap gap-3 mb-3">
-                    {hpdMatches.length > 0 && (
-                      <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
-                        <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{hpdMatches.length}</div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">HPD Violations</div>
-                      </div>
-                    )}
-                    {hpdOpen.length > 0 && (
-                      <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
-                        <div className="text-lg font-bold text-red-600">{hpdOpen.length}</div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Open HPD</div>
-                      </div>
-                    )}
-                    {hpdClassC.length > 0 && (
-                      <div className="bg-red-50 dark:bg-red-900/10 rounded-lg px-3 py-2">
-                        <div className="text-lg font-bold text-red-600">{hpdClassC.length}</div>
-                        <div className="text-[10px] text-red-500">Class C (Hazardous)</div>
-                      </div>
-                    )}
-                    {ecbMatches.length > 0 && (
-                      <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
-                        <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{ecbMatches.length}</div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">ECB Violations</div>
+            return (
+              <>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+                  <div className="max-w-5xl mx-auto px-3 md:px-4 py-3 flex items-center gap-3 relative">
+                    <button onClick={() => setAptDropdownOpen(!aptDropdownOpen)} className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-lg">Apt {apt}</span>
+                      <span className="text-blue-700 dark:text-blue-300 text-sm">Apartment-specific violations are highlighted below</span>
+                      <span className="text-blue-400 text-[10px]">{aptDropdownOpen ? "▲" : "▼"}</span>
+                    </button>
+                    <button onClick={() => { router.push(`/building/${bin}`); setAptDropdownOpen(false); }} className="text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 text-lg font-bold leading-none shrink-0" title="Clear apartment filter">×</button>
+                    {aptDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-0 bg-white dark:bg-[#1a1b2e] border border-gray-200 dark:border-gray-700 rounded-b-lg shadow-lg z-40">
+                        <div className="max-w-5xl mx-auto px-3 md:px-4 py-3">
+                          <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Apartment-specific info available for:</div>
+                          <button onClick={() => { router.push(`/building/${bin}`); setAptDropdownOpen(false); }} className="px-2 py-1 text-xs text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 rounded border border-gray-100 dark:border-gray-800 font-medium mb-2">
+                            ✕ Clear apartment filter
+                          </button>
+                          <div className="flex flex-wrap gap-1.5">
+                            {availableApts.map(a => (
+                              <button
+                                key={a}
+                                onClick={() => { router.push(`/building/${bin}?apt=${encodeURIComponent(a)}`); setAptDropdownOpen(false); }}
+                                className={`px-2 py-1 text-xs font-medium rounded border transition-colors ${apt === a ? "bg-blue-600 text-white border-blue-600" : "text-gray-500 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 border-gray-100 dark:border-gray-800"}`}
+                              >
+                                {a}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
-                  {/* Hazard callouts with violation references */}
-                  {sortedTags.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">⚠️ Hazard Flags</div>
-                      {sortedTags.map(([tagId, { icon, label, violations }]) => (
-                        <div key={tagId} className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm">{icon}</span>
-                            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">{label}</span>
+                </div>
+                {/* Apartment Summary */}
+                {(hpdMatches.length > 0 || ecbMatches.length > 0) && (
+                  <div className="bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700">
+                    <div className="max-w-5xl mx-auto px-3 md:px-4 py-4">
+                      <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Apartment {apt} — Summary</h2>
+                      <div className="flex flex-wrap gap-3 mb-3">
+                        {hpdMatches.length > 0 && (
+                          <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
+                            <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{hpdMatches.length}</div>
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400">HPD Violations</div>
                           </div>
-                          {violations.map((v: any) => (
-                            <div key={v.ecb_violation_number} className="text-xs text-gray-700 dark:text-gray-300 ml-6 mb-0.5">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">ECB# {v.ecb_violation_number}</span>
-                              <span className="text-gray-400 mx-1">·</span>
-                              <span>{v.issue_date?.slice(0, 10)}</span>
-                              <span className="text-gray-400 mx-1">·</span>
-                              <span className={v.ecb_violation_status === "RESOLVE" ? "text-gray-500" : "text-red-600 font-medium"}>{v.ecb_violation_status}</span>
-                              {v.penality_imposed && parseFloat(v.penality_imposed) > 0 && (
-                                <span className="text-gray-400 ml-1">(${parseFloat(v.penality_imposed).toLocaleString()})</span>
-                              )}
+                        )}
+                        {hpdOpen.length > 0 && (
+                          <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
+                            <div className="text-lg font-bold text-red-600">{hpdOpen.length}</div>
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400">Open HPD</div>
+                          </div>
+                        )}
+                        {hpdClassC.length > 0 && (
+                          <div className="bg-red-50 dark:bg-red-900/10 rounded-lg px-3 py-2">
+                            <div className="text-lg font-bold text-red-600">{hpdClassC.length}</div>
+                            <div className="text-[10px] text-red-500">Class C (Hazardous)</div>
+                          </div>
+                        )}
+                        {ecbMatches.length > 0 && (
+                          <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
+                            <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{ecbMatches.length}</div>
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400">ECB Violations</div>
+                          </div>
+                        )}
+                      </div>
+                      {sortedTags.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">⚠️ Hazard Flags</div>
+                          {sortedTags.map(([tagId, { icon, label, violations }]) => (
+                            <div key={tagId} className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm">{icon}</span>
+                                <span className="text-xs font-bold text-amber-900 dark:text-amber-200">{label}</span>
+                              </div>
+                              {violations.map((v: any) => (
+                                <div key={v.ecb_violation_number} className="text-xs text-gray-700 dark:text-gray-300 ml-6 mb-0.5">
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">ECB# {v.ecb_violation_number}</span>
+                                  <span className="text-gray-400 mx-1">·</span>
+                                  <span>{v.issue_date?.slice(0, 10)}</span>
+                                  <span className="text-gray-400 mx-1">·</span>
+                                  <span className={v.ecb_violation_status === "RESOLVE" ? "text-gray-500" : "text-red-600 font-medium"}>{v.ecb_violation_status}</span>
+                                  {v.penality_imposed && parseFloat(v.penality_imposed) > 0 && (
+                                    <span className="text-gray-400 ml-1">(${parseFloat(v.penality_imposed).toLocaleString()})</span>
+                                  )}
+                                </div>
+                              ))}
                             </div>
                           ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+              </>
+            );
+          })() : (
+            /* Building view — no apt selected, show subtle dropdown button */
+            <div className="border-b border-gray-100 dark:border-gray-800">
+              <div className="max-w-5xl mx-auto px-3 md:px-4 py-2 relative">
+                <button
+                  onClick={() => setAptDropdownOpen(!aptDropdownOpen)}
+                  className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+                >
+                  Apartments {aptDropdownOpen ? "▲" : "▼"}
+                </button>
+                {aptDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-0 bg-white dark:bg-[#1a1b2e] border border-gray-200 dark:border-gray-700 rounded-b-lg shadow-lg z-40">
+                    <div className="max-w-5xl mx-auto px-3 md:px-4 py-3">
+                      <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Apartment-specific info available for:</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {availableApts.map(a => (
+                          <button
+                            key={a}
+                            onClick={() => { router.push(`/building/${bin}?apt=${encodeURIComponent(a)}`); setAptDropdownOpen(false); }}
+                            className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 rounded border border-gray-100 dark:border-gray-800 font-medium"
+                          >
+                            {a}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </>
-        );
-      })()}
+            </div>
+          )}
+        </div>
+      )}
 
       <main className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-3 md:space-y-4">
         {/* Back to owner link (when navigated from network) */}
@@ -440,46 +497,7 @@ function BuildingPage() {
           </Link>
         )}
 
-        {/* Apartment selector */}
-        {availableApts.length > 0 && (
-          <div className="flex items-center gap-2 mb-2" ref={aptDropdownRef}>
-            <div className="relative">
-              <button
-                onClick={() => setAptDropdownOpen(!aptDropdownOpen)}
-                className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 ${apt ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400"}`}
-              >
-                🏠 {apt ? `Apt ${apt}` : "Apartments"} <span className="text-[10px]">{aptDropdownOpen ? "▲" : "▼"}</span>
-              </button>
-              {aptDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#1a1b2e] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-40 min-w-[200px] max-h-[300px] overflow-y-auto">
-                  <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-                    <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Apartment-specific info available for:</div>
-                  </div>
-                  {apt && (
-                    <button onClick={() => { router.push(`/building/${bin}`); setAptDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 font-medium">
-                      ✕ Clear apartment filter
-                    </button>
-                  )}
-                  {availableApts.map(a => (
-                    <button
-                      key={a}
-                      onClick={() => { router.push(`/building/${bin}?apt=${encodeURIComponent(a)}`); setAptDropdownOpen(false); }}
-                      className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-between ${apt === a ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium" : "text-gray-700 dark:text-gray-300"}`}
-                    >
-                      <span>Apt {a}</span>
-                      {apt === a && <span className="text-blue-500 text-xs">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {apt && (
-              <button onClick={() => router.push(`/building/${bin}`)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg font-bold leading-none" title="Clear apartment filter">
-                ×
-              </button>
-            )}
-          </div>
-        )}
+        {/* Apartment selector moved to merged header above */}
         {/* Address title + grade */}
         <div className="flex flex-wrap items-center gap-3 mb-1">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">
@@ -688,7 +706,7 @@ function BuildingPage() {
                 href={`/building/${bin}/renters-report${qsStr}`}
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors w-fit"
               >
-                📋 Generate Apartment Report
+                📋 Generate Apartment Hunters Report
               </Link>
               <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md">A printable safety snapshot covering open violations, construction activity, complaint history, and landlord track record — take it to your apartment viewing or lease negotiation.</p>
             </div>
@@ -788,7 +806,7 @@ function BuildingPage() {
                       <td className="py-2 pr-2 text-xs">{formatDate(v.inspectiondate)}</td>
                       <td className={`py-2 pr-2 text-xs ${daysColor(days)}`}>{formatDays(days)}</td>
                       <td className="py-2 pr-2 text-xs max-w-[64px] truncate">{v.currentstatus}</td>
-                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-[40%] relative">
+                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 w-1/2 relative">
                         <span className="block truncate">{v.novdescription}</span>
                         <div className="flex flex-wrap gap-1 mt-0.5">
                           {(v.tags || []).map((t: any) => (
@@ -1141,13 +1159,14 @@ function BuildingPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b">
-                      <th className="pb-2 pr-2">Date</th><th className="pb-2 pr-2">Category</th><th className="pb-2 pr-2">Status</th><th className="pb-2 pr-2">Disposition</th><th className="pb-2">Inspected</th>
+                      <th className="pb-2 pr-2">Date</th><th className="pb-2 pr-2">Category</th><th className="pb-2 pr-2">Tags</th><th className="pb-2 pr-2">Status</th><th className="pb-2 pr-2">Disposition</th><th className="pb-2">Inspected</th>
                     </tr></thead>
                     <tbody>
                       {complaints.slice(0, 10).map((c: any, i: number) => (
                         <tr key={i} onClick={() => openDrawer("complaint" as any, i, complaints.slice(0, 10))} className="border-b border-gray-50 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#0f1117] transition-colors">
                           <td className="py-2 pr-2 text-xs">{c.date_entered || "—"}</td>
                           <td className="py-2 pr-2 text-xs">{c.category_description && c.category_description !== c.complaint_category ? c.category_description : c.complaint_category || "—"}</td>
+                          <td className="py-2 pr-2 text-xs">{(() => { const tags = c.tags || []; if (!tags.length) return <span className="text-gray-300 dark:text-gray-600">—</span>; return (<div className="flex flex-wrap gap-1">{tags.map((t: any, ti: number) => { const highSev = ["fire-stopping","asbestos","lead","structural","egress"].includes(t.id); return <span key={ti} className={`inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>{t.icon} {t.label}</span>; })}</div>); })()}</td>
                           <td className="py-2 pr-2 text-xs">
                             <span className={c.status === 'ACTIVE' ? 'text-red-600 font-medium' : 'text-gray-500'}>{c.status}</span>
                           </td>
@@ -1473,6 +1492,18 @@ function BuildingPage() {
             { label: "Date Filed", value: drawerItem.date_entered },
             { label: "Status", value: drawerItem.status },
             { label: "Category", value: drawerItem.bisweb?.category_full || (drawerItem.category_description && drawerItem.category_description !== drawerItem.complaint_category ? `${drawerItem.complaint_category} — ${drawerItem.category_description}` : drawerItem.complaint_category) },
+            ...(drawerItem.tags && drawerItem.tags.length > 0 ? [{ label: "Hazard Tags", value: (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {drawerItem.tags.map((t: any, ti: number) => {
+                  const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
+                  return (
+                    <span key={ti} className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>
+                      {t.icon} {t.label}
+                    </span>
+                  );
+                })}
+              </div>
+            ), full: true }] : []),
             ...(drawerItem.bisweb?.description ? [{ label: "Re", value: redactSlurs(drawerItem.bisweb.description), full: true }] : []),
             { label: "Unit", value: drawerItem.unit },
             ...(drawerItem.bisweb?.assigned_to ? [{ label: "Assigned To", value: drawerItem.bisweb.assigned_to }] : []),

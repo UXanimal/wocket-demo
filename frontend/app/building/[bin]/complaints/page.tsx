@@ -97,6 +97,18 @@ function ComplaintsPageInner() {
           { key: "disposition_description", label: "Disposition", render: (r) => (
             <span>{r.disposition_code ? <span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.disposition_code}</span> : null}{r.disposition_description && r.disposition_description !== r.disposition_code ? r.disposition_description : ""}</span>
           )},
+          { key: "tags", label: "Tags", render: (r) => {
+            const tags = r.tags || [];
+            if (!tags.length) return <span className="text-gray-300 dark:text-gray-600">—</span>;
+            return (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((t: any, i: number) => {
+                  const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
+                  return <span key={i} className={`inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>{t.icon} {t.label}</span>;
+                })}
+              </div>
+            );
+          }, sortable: false },
           { key: "inspection_date", label: "Inspected" },
         ]}
         filters={[
@@ -122,6 +134,18 @@ function ComplaintsPageInner() {
           { label: "Date Filed", value: selected.date_entered },
           { label: "Status", value: selected.status },
           { label: "Category", value: selected.bisweb?.category_full || (selected.category_description && selected.category_description !== selected.complaint_category ? `${selected.complaint_category} — ${selected.category_description}` : selected.complaint_category) },
+          ...(selected.tags && selected.tags.length > 0 ? [{ label: "Hazard Tags", value: (
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {selected.tags.map((t: any, ti: number) => {
+                const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
+                return (
+                  <span key={ti} className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>
+                    {t.icon} {t.label}
+                  </span>
+                );
+              })}
+            </div>
+          ), full: true }] : []),
           ...(selected.bisweb?.description ? [{ label: "Re", value: redactSlurs(selected.bisweb.description), full: true }] : []),
           { label: "Unit", value: selected.unit },
           ...(selected.bisweb?.assigned_to ? [{ label: "Assigned To", value: selected.bisweb.assigned_to }] : []),

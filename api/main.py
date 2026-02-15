@@ -130,6 +130,36 @@ ECB_TAG_DEFINITIONS = {
     },
 }
 
+COMPLAINT_TAG_MAP = {
+    "01": [{"id": "plumbing", "icon": "🔧", "label": "Plumbing"}],
+    "03": [{"id": "plumbing", "icon": "🔧", "label": "Plumbing"}],
+    "04": [{"id": "structural", "icon": "🧱", "label": "Structural"}],
+    "05": [{"id": "structural", "icon": "🧱", "label": "Structural"}],
+    "06": [{"id": "structural", "icon": "🧱", "label": "Structural"}],
+    "09": [{"id": "elevator", "icon": "🛗", "label": "Elevator"}],
+    "12": [{"id": "no-permit", "icon": "🚫", "label": "Illegal Conversion"}],
+    "13": [{"id": "no-permit", "icon": "🚫", "label": "No Permit"}],
+    "14": [{"id": "plumbing", "icon": "🔧", "label": "Plumbing"}],
+    "15": [{"id": "structural", "icon": "🧱", "label": "Crane Safety"}],
+    "18": [{"id": "no-permit", "icon": "🚫", "label": "Illegal Conversion"}],
+    "20": [{"id": "structural", "icon": "🧱", "label": "Construction Safety"}],
+    "23": [{"id": "structural", "icon": "🧱", "label": "Demolition"}],
+    "29": [{"id": "structural", "icon": "🧱", "label": "Excavation"}],
+    "31": [{"id": "no-permit", "icon": "🚫", "label": "No C of O"}],
+    "45": [{"id": "structural", "icon": "🧱", "label": "Failure to Maintain"}],
+    "46": [{"id": "no-permit", "icon": "🚫", "label": "No Permit"}],
+    "4B": [{"id": "electrical", "icon": "⚡", "label": "Electrical"}],
+    "4E": [{"id": "egress", "icon": "🚪", "label": "Vacant/Open"}],
+    "4G": [{"id": "structural", "icon": "🧱", "label": "Structural"}],
+    "59": [{"id": "egress", "icon": "🚪", "label": "Safety Devices"}],
+    "83": [{"id": "no-permit", "icon": "🚫", "label": "Illegal Conversion"}],
+    "85": [{"id": "fire-stopping", "icon": "🔥", "label": "Gas/Fire-Stop"}],
+    "91": [{"id": "no-permit", "icon": "🚫", "label": "No C of O"}],
+}
+
+def tag_complaint(category_code: str) -> list:
+    return COMPLAINT_TAG_MAP.get(category_code, [])
+
 def tag_ecb_violation(desc: str) -> list:
     """Return list of hazard tag dicts that match the ECB violation description."""
     if not desc:
@@ -626,6 +656,7 @@ def get_building(bin_number: str, apt: Optional[str] = None):
     for c in complaints:
         c['category_description'] = COMPLAINT_CATEGORIES.get(c.get('complaint_category', ''), c.get('complaint_category', ''))
         c['disposition_description'] = DISPOSITION_CODES.get(c.get('disposition_code', ''), c.get('disposition_code', ''))
+        c['tags'] = tag_complaint(c.get('complaint_category', ''))
         bw = bisweb_map.get(c.get('complaint_number'))
         if bw:
             c['bisweb'] = {k: v for k, v in bw.items() if v is not None}
@@ -1770,6 +1801,7 @@ def get_all_complaints(
     for r in rows:
         r['category_description'] = COMPLAINT_CATEGORIES.get(r.get('complaint_category', ''), r.get('complaint_category', ''))
         r['disposition_description'] = DISPOSITION_CODES.get(r.get('disposition_code', ''), r.get('disposition_code', ''))
+        r['tags'] = tag_complaint(r.get('complaint_category', ''))
         bw = bisweb_map.get(r.get('complaint_number'))
         if bw:
             r['bisweb'] = {k: v for k, v in bw.items() if v is not None}

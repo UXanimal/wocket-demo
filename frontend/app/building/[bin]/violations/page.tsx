@@ -82,6 +82,18 @@ function ViolationsPageInner() {
           )},
           { key: "currentstatus", label: "Current Status" },
           { key: "novdescription", label: "Description", className: "max-w-xs truncate" },
+          { key: "tags", label: "Tags", render: (r) => {
+            const tags = r.tags || [];
+            if (!tags.length) return <span className="text-gray-300 dark:text-gray-600">—</span>;
+            return (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((t: any, i: number) => {
+                  const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
+                  return <span key={i} className={`inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>{t.icon} {t.label}</span>;
+                })}
+              </div>
+            );
+          }, sortable: false },
         ]}
         filters={[
           { key: "class", label: "Class", options: [
@@ -123,6 +135,18 @@ function ViolationsPageInner() {
           { label: "Current Status", value: selected.currentstatus },
           { label: "NOV Type", value: selected.novtype },
           { label: "Description", value: selected.novdescription, full: true },
+          ...(selected.tags && selected.tags.length > 0 ? [{ label: "Hazard Tags", value: (
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {selected.tags.map((t: any, ti: number) => {
+                const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
+                return (
+                  <span key={ti} className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>
+                    {t.icon} {t.label}
+                  </span>
+                );
+              })}
+            </div>
+          ), full: true }] : []),
         ] : []}
       />
     </>
