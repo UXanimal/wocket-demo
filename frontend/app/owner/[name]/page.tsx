@@ -22,6 +22,10 @@ interface Building {
   tco_expired: boolean;
   unsigned_jobs: number | null;
   owner_name: string;
+  corporate_owner: string | null;
+  individual_owner: string | null;
+  agent_name: string | null;
+  head_officer: string | null;
   latitude: number | null;
   longitude: number | null;
 }
@@ -418,7 +422,17 @@ function OwnerPage() {
                       onClick={() => router.push(`/building/${b.bin}`)}
                       className="border-b border-gray-50 dark:border-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors"
                     >
-                      <td className="py-2.5 pr-2 font-medium text-gray-900 dark:text-gray-100">{b.address}</td>
+                      <td className="py-2.5 pr-2">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">{b.address}</div>
+                        {(b.corporate_owner || b.individual_owner || b.agent_name || b.head_officer) && (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 space-y-0">
+                            {b.corporate_owner && <div>{b.corporate_owner}</div>}
+                            {b.individual_owner && <div>Owner: {b.individual_owner}</div>}
+                            {b.head_officer && <div>Head Officer: {b.head_officer}</div>}
+                            {b.agent_name && <div>Agent: {b.agent_name}</div>}
+                          </div>
+                        )}
+                      </td>
                       <td className="py-2.5 pr-2 text-gray-600 dark:text-gray-300">{b.borough}</td>
                       <td className="py-2.5 pr-2">
                         <span className={`text-xs font-bold px-2 py-0.5 rounded ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>

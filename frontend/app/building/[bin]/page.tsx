@@ -9,6 +9,7 @@ import CodeGlossary from "../../components/CodeGlossary";
 import { redactSlurs } from "../../utils/redact";
 import BuildingSafetySummary from "../../components/BuildingSafetySummary";
 const CompanyDrawer = dynamic(() => import("../../components/CompanyDrawer"), { ssr: false });
+const BuildingTimeline = dynamic(() => import("../../components/BuildingTimeline"), { ssr: false });
 
 function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: string; updatedAt?: string }) {
   const [summary, setSummary] = useState(existing || "");
@@ -763,6 +764,23 @@ function BuildingPage() {
               This building has <strong>{unsignedJobs.length} major construction job(s) without final signoff</strong>. Unsigned Alteration Type 1 or New Building jobs may indicate construction was never completed to code, which can affect the validity of the Certificate of Occupancy.
             </LegalNote>
           )}
+        </Collapsible>
+
+        {/* Building Timeline */}
+        <Collapsible
+          title="Building Timeline"
+          subtitle="Showing open HPD violations, all ECB/DOB records"
+          defaultOpen={false}
+        >
+          <BuildingTimeline
+            violations={data.open_violations || []}
+            ecbViolations={data.ecb_violations || []}
+            complaints={(data as any).complaints || []}
+            permits={data.bis_jobs || []}
+            firstTcoDate={data.first_tco_date}
+            latestTcoDate={data.latest_tco_date}
+            tcoExpired={b.tco_expired}
+          />
         </Collapsible>
 
         {/* HPD Violations */}

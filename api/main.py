@@ -2757,7 +2757,13 @@ def get_company_profile(company_name: str):
              WHERE r.bin = bs.bin AND c.type = 'CorporateOwner' LIMIT 1) as corporate_owner,
             (SELECT c.firstname || ' ' || c.lastname FROM hpd_contacts c 
              JOIN hpd_registrations r ON c.registrationid = r.registrationid
-             WHERE r.bin = bs.bin AND c.type = 'IndividualOwner' LIMIT 1) as individual_owner
+             WHERE r.bin = bs.bin AND c.type = 'IndividualOwner' LIMIT 1) as individual_owner,
+            (SELECT c.firstname || ' ' || c.lastname FROM hpd_contacts c 
+             JOIN hpd_registrations r ON c.registrationid = r.registrationid
+             WHERE r.bin = bs.bin AND c.type = 'Agent' LIMIT 1) as agent_name,
+            (SELECT c.firstname || ' ' || c.lastname FROM hpd_contacts c 
+             JOIN hpd_registrations r ON c.registrationid = r.registrationid
+             WHERE r.bin = bs.bin AND c.type = 'HeadOfficer' LIMIT 1) as head_officer
         FROM building_scores bs
         WHERE bs.bin = ANY(%s)
         ORDER BY bs.address
