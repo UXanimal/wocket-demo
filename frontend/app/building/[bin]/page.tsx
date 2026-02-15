@@ -2,11 +2,13 @@
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import SearchBar from "../../components/SearchBar";
 import DetailDrawer from "../../components/DetailDrawer";
 import CodeGlossary from "../../components/CodeGlossary";
 import { redactSlurs } from "../../utils/redact";
 import BuildingSafetySummary from "../../components/BuildingSafetySummary";
+const CompanyDrawer = dynamic(() => import("../../components/CompanyDrawer"), { ssr: false });
 
 function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: string; updatedAt?: string }) {
   const [summary, setSummary] = useState(existing || "");
@@ -258,6 +260,8 @@ function BuildingPage() {
   const [drawerIdx, setDrawerIdx] = useState(-1);
   const [drawerData, setDrawerData] = useState<any[]>([]);
   const [mapTouched, setMapTouched] = useState(false);
+  const [companyDrawerOpen, setCompanyDrawerOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState("");
   const [availableApts, setAvailableApts] = useState<string[]>([]);
   const [aptDropdownOpen, setAptDropdownOpen] = useState(false);
   const aptDropdownRef = useRef<HTMLDivElement>(null);
@@ -1473,7 +1477,14 @@ function BuildingPage() {
             { label: "Status", value: drawerItem.job_status_descrp },
             { label: "Risk", value: drawerItem.risk_tier === 'critical' ? 'Critical' : drawerItem.risk_tier === 'high' ? 'High' : drawerItem.risk_tier === 'warning' ? 'Warning' : drawerItem.risk_tier === 'low' ? 'Low' : drawerItem.risk_tier === 'clear' ? 'Signed Off' : drawerItem.risk_tier === 'none' ? 'None' : '—' },
             { label: "Last Action", value: formatDate(drawerItem.latest_action_date) },
-            { label: "Applicant/Contractor", value: drawerItem.applicant_business_name || "—" },
+            { label: "Applicant/Contractor", value: drawerItem.applicant_business_name ? (
+              <button
+                onClick={() => { setSelectedCompany(drawerItem.applicant_business_name); setCompanyDrawerOpen(true); }}
+                className="text-blue-600 hover:text-blue-800 font-medium underline-offset-2 hover:underline cursor-pointer text-left"
+              >
+                {drawerItem.applicant_business_name}
+              </button>
+            ) : "—" },
             { label: "License #", value: drawerItem.applicant_license || "—" },
             { label: "Floor", value: drawerItem.work_on_floor || "—" },
             { label: "Estimated Cost", value: drawerItem.estimated_job_costs ? `$${Number(drawerItem.estimated_job_costs).toLocaleString()}` : "—" },
@@ -1561,6 +1572,12 @@ function BuildingPage() {
           ]}
         />
       )}
+      <CompanyDrawer
+        open={companyDrawerOpen}
+        onClose={() => setCompanyDrawerOpen(false)}
+        companyName={selectedCompany}
+        currentBin={bin}
+      />
     </div>
   );
 }

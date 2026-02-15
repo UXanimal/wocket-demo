@@ -2700,6 +2700,128 @@ def building_predictions(bin_number: str):
         conn.close()
 
 
+@app.get("/api/company/{company_name}")
+def get_company_profile(company_name: str):
+    """Get cross-building profile for a construction company/contractor."""
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    
+    name_pattern = f"%{company_name.upper()}%"
+    
+    # Permits across all buildings
+    cur.execute("""
+        SELECT p.bin, p.work_type, p.permit_status, p.job_description, 
+            p.issued_date, p.expired_date, p.estimated_job_costs, p.work_on_floor,
+            p.applicant_license, p.job_filing_number,
+            bs.address, bs.borough, bs.score_grade
+        FROM dobnow_permits p
+        LEFT JOIN building_scores bs ON p.bin = bs.bin
+        WHERE UPPER(p.applicant_business_name) LIKE %s
+        ORDER BY p.issued_date DESC NULLS LAST
+    """, [name_pattern])
+    permits = cur.fetchall()
+    
+    # ECB violations where they're the respondent
+    cur.execute("""
+        SELECT e.bin, e.ecb_violation_number, e.issue_date, e.severity,
+            e.ecb_violation_status, e.penality_imposed, e.violation_description,
+            e.respondent_name,
+            bs.address, bs.borough, bs.score_grade
+        FROM ecb_violations e
+        LEFT JOIN building_scores bs ON e.bin = bs.bin
+        WHERE UPPER(e.respondent_name) LIKE %s
+        ORDER BY e.issue_date DESC NULLS LAST
+    """, [name_pattern])
+    ecb_violations = cur.fetchall()
+    
+    # Tag ECB violations
+    for v in ecb_violations:
+        v['tags'] = tag_ecb_violation(v.get('violation_description') or '')
+        v['extracted_apartments'] = extract_apartments_from_description(v.get('violation_description') or '')
+    
+    # Summary stats
+    permit_buildings = list(set(p['bin'] for p in permits if p.get('bin')))
+    ecb_buildings = list(set(v['bin'] for v in ecb_violations if v.get('bin')))
+    all_buildings = list(set(permit_buildings + ecb_buildings))
+    
+    total_penalties = sum(float(v.get('penality_imposed') or 0) for v in ecb_violations)
+    active_violations = [v for v in ecb_violations if (v.get('ecb_violation_status') or '').upper() not in ('RESOLVE', 'DISMISS')]
+    class1_violations = [v for v in ecb_violations if 'CLASS - 1' in (v.get('severity') or '').upper() or 'IMM' in (v.get('severity') or '').upper()]
+    
+    # Building list with grades
+    cur.execute("""
+        SELECT bin, address, borough, score_grade, 
+            total_hpd_violations, open_class_c
+        FROM building_scores 
+        WHERE bin = ANY(%s)
+        ORDER BY address
+    """, [all_buildings])
+    buildings = cur.fetchall()
+    
+    # Get other companies that work on the same buildings (connected contractors)
+    if permit_buildings:
+        placeholders = ','.join(['%s'] * len(permit_buildings))
+        cur.execute(f"""
+            SELECT applicant_business_name, COUNT(*) as permits, COUNT(DISTINCT bin) as buildings
+            FROM dobnow_permits
+            WHERE bin IN ({placeholders})
+            AND UPPER(applicant_business_name) NOT LIKE %s
+            AND applicant_business_name IS NOT NULL
+            AND applicant_business_name != ''
+            GROUP BY applicant_business_name
+            ORDER BY permits DESC
+            LIMIT 10
+        """, permit_buildings + [name_pattern])
+        connected_companies = cur.fetchall()
+    else:
+        connected_companies = []
+    
+    # Comparison: average stats for all contractors with 5+ permits
+    cur.execute("""
+        WITH contractor_stats AS (
+            SELECT applicant_business_name,
+                COUNT(*) as permit_count,
+                COUNT(DISTINCT bin) as building_count
+            FROM dobnow_permits
+            WHERE applicant_business_name IS NOT NULL AND applicant_business_name != ''
+            GROUP BY applicant_business_name
+            HAVING COUNT(*) >= 5
+        )
+        SELECT AVG(permit_count) as avg_permits, AVG(building_count) as avg_buildings,
+            COUNT(*) as total_contractors
+        FROM contractor_stats
+    """)
+    comparison = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    summary = {
+        "name": company_name,
+        "total_permits": len(permits),
+        "total_buildings": len(all_buildings),
+        "total_ecb_violations": len(ecb_violations),
+        "active_ecb_violations": len(active_violations),
+        "class1_violations": len(class1_violations),
+        "total_penalties": total_penalties,
+        "permit_buildings": len(permit_buildings),
+        "ecb_buildings": len(ecb_buildings),
+        "comparison": {
+            "avg_permits": float(comparison['avg_permits'] or 0) if comparison else 0,
+            "avg_buildings": float(comparison['avg_buildings'] or 0) if comparison else 0,
+            "total_contractors": comparison['total_contractors'] if comparison else 0,
+        } if comparison else None,
+    }
+    
+    return {
+        "summary": summary,
+        "permits": permits[:100],  # Limit response size
+        "ecb_violations": ecb_violations,
+        "buildings": buildings,
+        "connected_companies": connected_companies,
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

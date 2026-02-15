@@ -1,9 +1,11 @@
 "use client";
 import { Suspense, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import ListPage from "../../../components/ListPage";
 import type { GlossarySection } from "../../../components/ListPage";
 import DetailDrawer, { formatDate, fmt$ } from "../../../components/DetailDrawer";
+const CompanyDrawer = dynamic(() => import("../../../components/CompanyDrawer"), { ssr: false });
 
 const PERMITS_GLOSSARY: GlossarySection[] = [
   {
@@ -71,6 +73,8 @@ function PermitsPageInner() {
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
   const [currentData, setCurrentData] = useState<any[]>([]);
   const selected = selectedIdx >= 0 ? currentData[selectedIdx] : null;
+  const [companyDrawerOpen, setCompanyDrawerOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState("");
 
   const handleRowClick = useCallback((row: any, index: number, allData: any[]) => {
     setCurrentData(allData);
@@ -166,12 +170,25 @@ function PermitsPageInner() {
           { label: "Existing Dwelling Units", value: selected.existing_dwelling_units },
           { label: "Proposed Dwelling Units", value: selected.proposed_dwelling_units },
           { label: "Owner", value: [selected.owner_first_name, selected.owner_last_name].filter(Boolean).join(" ") || selected.owner_business_name || "—" },
-          { label: "Applicant/Contractor", value: selected.applicant_business_name || "—" },
+          { label: "Applicant/Contractor", value: selected.applicant_business_name ? (
+            <button
+              onClick={() => { setSelectedCompany(selected.applicant_business_name); setCompanyDrawerOpen(true); }}
+              className="text-blue-600 hover:text-blue-800 font-medium underline-offset-2 hover:underline cursor-pointer text-left"
+            >
+              {selected.applicant_business_name}
+            </button>
+          ) : "—" },
           { label: "License #", value: selected.applicant_license || "—" },
           { label: "Floor", value: selected.work_on_floor || "—" },
           { label: "Estimated Cost", value: selected.estimated_job_costs ? `$${Number(selected.estimated_job_costs).toLocaleString()}` : "—" },
           { label: "Description", value: selected.job_description, full: true },
         ] : []}
+      />
+      <CompanyDrawer
+        open={companyDrawerOpen}
+        onClose={() => setCompanyDrawerOpen(false)}
+        companyName={selectedCompany}
+        currentBin={bin}
       />
     </>
   );
