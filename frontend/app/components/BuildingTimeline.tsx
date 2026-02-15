@@ -60,14 +60,16 @@ export default function BuildingTimeline({
     ecbViolations.forEach((v) => { push(v.issue_date); });
     complaints.forEach((c) => push(c.date_entered));
     permits.forEach((p) => { push(p.latest_action_date); push(p.signoff_date); });
-    push(firstTcoDate);
-    push(latestTcoDate);
 
     if (dates.length === 0) return { allDates: dates, minTime: 0, maxTime: 0, timeSpanMs: 0 };
 
-    const pad = 180 * 24 * 3600 * 1000; // 6 months
+    // TCO dates shown as markers but don't stretch the range
+    const tcoTimes: number[] = [];
+    [firstTcoDate, latestTcoDate].forEach((d) => { const p = parseDate(d); if (p) tcoTimes.push(p.getTime()); });
+
+    const pad = 90 * 24 * 3600 * 1000; // 3 months
     const mn = Math.min(...dates) - pad;
-    const mx = Math.max(...dates, Date.now()) + pad;
+    const mx = Math.max(...dates, ...tcoTimes, Date.now()) + pad;
     return { allDates: dates, minTime: mn, maxTime: mx, timeSpanMs: mx - mn };
   }, [violations, ecbViolations, complaints, permits, firstTcoDate, latestTcoDate]);
 
