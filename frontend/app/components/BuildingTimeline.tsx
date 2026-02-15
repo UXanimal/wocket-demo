@@ -87,11 +87,15 @@ export default function BuildingTimeline({
   const totalH = lanes.length * (laneH + gap) + 30; // +30 for x-axis
   const xScale = (t: number) => labelW + ((t - minTime) / timeSpanMs) * chartW;
 
-  // Year markers
+  // Year markers — thin labels on narrow screens
   const startYear = new Date(minTime).getFullYear();
   const endYear = new Date(maxTime).getFullYear();
+  const totalYears = endYear - startYear + 1;
+  const minLabelSpacing = 40; // px per label
+  const maxLabels = Math.max(2, Math.floor(chartW / minLabelSpacing));
+  const yearStep = Math.max(1, Math.ceil(totalYears / maxLabels));
   const years: number[] = [];
-  for (let y = startYear; y <= endYear; y++) years.push(y);
+  for (let y = startYear; y <= endYear; y += yearStep) years.push(y);
 
   const laneY = (i: number) => i * (laneH + gap);
 
