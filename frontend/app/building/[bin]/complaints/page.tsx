@@ -124,6 +124,9 @@ function ComplaintsPageInner() {
 
   return (
     <>
+      <p className="text-xs italic text-gray-400 dark:text-gray-500 px-4 md:px-6 pt-3">
+        ⚠️ Note: A &lsquo;resolved&rsquo; or &lsquo;closed&rsquo; status means the city closed the case — it does not guarantee the issue was actually corrected.
+      </p>
       <ListPage
         title="DOB Complaints"
         apiPath="complaints/all"
@@ -135,7 +138,7 @@ function ComplaintsPageInner() {
             <span><span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.complaint_category}</span>{r.category_description && r.category_description !== r.complaint_category ? r.category_description : ""}</span>
           )},
           { key: "status", label: "Status", render: (r) => (
-            <span className={r.status === "ACTIVE" ? "text-red-600 font-medium" : "text-gray-500 dark:text-gray-400"}>{r.status}</span>
+            <span className={r.status === "ACTIVE" ? "text-red-600 font-medium" : "text-gray-500 dark:text-gray-400"} title={r.status !== "ACTIVE" ? "Case closed by city — not verified fixed" : undefined}>{r.status}{r.status !== "ACTIVE" ? "†" : ""}</span>
           )},
           { key: "disposition_description", label: "Disposition", render: (r) => (
             <span>{r.disposition_code ? <span className="font-mono text-gray-400 dark:text-gray-500 mr-1">{r.disposition_code}</span> : null}{r.disposition_description && r.disposition_description !== r.disposition_code ? r.disposition_description : ""}</span>

@@ -10,6 +10,7 @@ import { redactSlurs } from "../../utils/redact";
 import BuildingSafetySummary from "../../components/BuildingSafetySummary";
 const CompanyDrawer = dynamic(() => import("../../components/CompanyDrawer"), { ssr: false });
 const BuildingTimeline = dynamic(() => import("../../components/BuildingTimeline"), { ssr: false });
+const ActivityHeatmap = dynamic(() => import("../../components/ActivityHeatmap"), { ssr: false });
 
 function AISummary({ bin, existing, updatedAt }: { bin: string; existing?: string; updatedAt?: string }) {
   const [summary, setSummary] = useState(existing || "");
@@ -780,6 +781,20 @@ function BuildingPage() {
             firstTcoDate={data.first_tco_date}
             latestTcoDate={data.latest_tco_date}
             tcoExpired={b.tco_expired}
+          />
+        </Collapsible>
+
+        {/* Activity Heatmap */}
+        <Collapsible
+          title="Activity Heatmap"
+          subtitle="Daily activity density — violations, complaints, ECB, and permits"
+          defaultOpen={false}
+        >
+          <ActivityHeatmap
+            violations={data.open_violations || []}
+            ecbViolations={data.ecb_violations || []}
+            complaints={(data as any).complaints || []}
+            permits={data.bis_jobs || []}
           />
         </Collapsible>
 

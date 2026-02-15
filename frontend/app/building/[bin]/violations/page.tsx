@@ -56,6 +56,9 @@ function ViolationsPageInner() {
 
   return (
     <>
+      <p className="text-xs italic text-gray-400 dark:text-gray-500 px-4 md:px-6 pt-3">
+        ⚠️ Note: A &lsquo;resolved&rsquo; or &lsquo;closed&rsquo; status means the city closed the case — it does not guarantee the issue was actually corrected.
+      </p>
       <ListPage
         title="HPD Violations"
         apiPath="violations/all"
@@ -78,7 +81,7 @@ function ViolationsPageInner() {
             return <span className={color}>{text}</span>;
           }},
           { key: "violationstatus", label: "Status", render: (r) => (
-            <span className={r.violationstatus === "Open" ? "text-red-600 font-medium" : "text-gray-500 dark:text-gray-400"}>{r.violationstatus}</span>
+            <span className={r.violationstatus === "Open" ? "text-red-600 font-medium" : "text-gray-500 dark:text-gray-400"} title={r.violationstatus !== "Open" ? "Case closed by city — not verified fixed" : undefined}>{r.violationstatus}{r.violationstatus !== "Open" ? "†" : ""}</span>
           )},
           { key: "currentstatus", label: "Current Status" },
           { key: "novdescription", label: "Description", className: "max-w-xs truncate" },

@@ -61,6 +61,9 @@ function EcbPageInner() {
 
   return (
     <>
+      <p className="text-xs italic text-gray-400 dark:text-gray-500 px-4 md:px-6 pt-3">
+        ⚠️ Note: A &lsquo;resolved&rsquo; or &lsquo;closed&rsquo; status means the city closed the case — it does not guarantee the issue was actually corrected.
+      </p>
       <ListPage
         title="DOB/ECB Violations"
         apiPath="ecb/all"
@@ -78,7 +81,7 @@ function EcbPageInner() {
           { key: "ecb_violation_status", label: "Status", render: (r) => {
             const s = r.ecb_violation_status;
             if (s === "ACTIVE") return <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">ACTIVE</span>;
-            if (s === "RESOLVE") return <span className="text-gray-500 dark:text-gray-400">RESOLVED</span>;
+            if (s === "RESOLVE") return <span className="text-gray-500 dark:text-gray-400" title="Case closed by city — not verified fixed">RESOLVED†</span>;
             return <span className="text-gray-400 dark:text-gray-500">{s || "—"}</span>;
           }},
           { key: "violation_description", label: "Description", className: "max-w-xs truncate" },

@@ -259,6 +259,11 @@ export default function BuildingSafetySummary({ data }: BuildingSafetySummaryPro
           );
         })}
       </div>
+      {(data.open_violations || []).some((v: any) => v.violationstatus !== "Open") && (
+        <p className="text-xs italic text-gray-400 dark:text-gray-500 mt-2">
+          † Resolved = case closed by city. Does not confirm the issue was corrected.
+        </p>
+      )}
     </div>
   );
 }
