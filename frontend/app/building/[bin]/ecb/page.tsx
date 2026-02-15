@@ -81,22 +81,23 @@ function EcbPageInner() {
             if (s === "RESOLVE") return <span className="text-gray-500 dark:text-gray-400">RESOLVED</span>;
             return <span className="text-gray-400 dark:text-gray-500">{s || "—"}</span>;
           }},
-          { key: "violation_description", label: "Description", render: (r) => (
-            <div className="max-w-xs">
-              <div className="truncate">{r.violation_description || "—"}</div>
-              {((r.tags || []).length > 0 || (r.extracted_apartments || []).length > 0) && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {(r.tags || []).map((t: any, i: number) => {
-                    const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
-                    return <span key={i} className={`inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>{t.icon} {t.label}</span>;
-                  })}
-                  {(r.extracted_apartments || []).length > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">🏠 {r.extracted_apartments.join(", ")}</span>
-                  )}
-                </div>
-              )}
-            </div>
-          )},
+          { key: "violation_description", label: "Description", className: "max-w-xs truncate" },
+          { key: "tags", label: "Tags", render: (r) => {
+            const tags = r.tags || [];
+            const apts = r.extracted_apartments || [];
+            if (!tags.length && !apts.length) return <span className="text-gray-300 dark:text-gray-600">—</span>;
+            return (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((t: any, i: number) => {
+                  const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
+                  return <span key={i} className={`inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>{t.icon} {t.label}</span>;
+                })}
+                {apts.length > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">🏠 {apts.join(", ")}</span>
+                )}
+              </div>
+            );
+          }, sortable: false },
           { key: "penality_imposed", label: "Penalty", render: (r) => fmt$(r.penality_imposed) },
           { key: "balance_due", label: "Balance", render: (r) => r.balance_due > 0 ? <span className="text-red-600 font-medium">{fmt$(r.balance_due)}</span> : fmt$(r.balance_due) },
         ]}

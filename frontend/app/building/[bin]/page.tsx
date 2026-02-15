@@ -854,7 +854,7 @@ function BuildingPage() {
                           {(v.tags || []).map((t: any) => (
                             <span key={t.id} className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{t.icon} {t.label}</span>
                           ))}
-                          {(v.extracted_apartments || []).length > 0 && (
+                          {!apt && (v.extracted_apartments || []).length > 0 && (
                             <span className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">🏠 {(v.extracted_apartments || []).join(", ")}</span>
                           )}
                         </div>
