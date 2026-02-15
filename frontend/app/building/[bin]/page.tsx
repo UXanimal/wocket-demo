@@ -344,7 +344,7 @@ function BuildingPage() {
         const hpdOpen = hpdMatches.filter((v: any) => v.violationstatus === "Open");
         const hpdClassC = hpdOpen.filter((v: any) => v.class === "C");
         // Collect hazardous ECB violations with tags
-        const hazardousEcb = ecbMatches.filter((v: any) => (v.tags || []).length > 0);
+        const hazardousEcb = ecbMatches.filter((v: any) => (v.tags || []).length > 0 && !['RESOLVE', 'DISMISS'].includes((v.ecb_violation_status || '').toUpperCase()));
         const allTags = new Map<string, { icon: string; label: string; violations: any[] }>();
         for (const v of hazardousEcb) {
           for (const t of v.tags || []) {
@@ -368,8 +368,8 @@ function BuildingPage() {
                   <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-lg">Apt {apt}</span>
                   <span className="text-blue-700 dark:text-blue-300 text-sm">Apartment-specific violations are highlighted below</span>
                 </div>
-                <button onClick={() => router.push(`/building/${bin}`)} className="text-blue-600 hover:text-blue-800 text-sm font-medium whitespace-nowrap">
-                  View full building →
+                <button onClick={() => router.push(`/building/${bin}`)} className="text-blue-400 hover:text-blue-600 text-lg font-bold leading-none" title="View full building">
+                  ×
                 </button>
               </div>
             </div>
@@ -378,25 +378,31 @@ function BuildingPage() {
               <div className="bg-white dark:bg-[#1a1b2e] border-b border-gray-200 dark:border-gray-700">
                 <div className="max-w-5xl mx-auto px-3 md:px-4 py-4">
                   <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Apartment {apt} — Summary</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                    <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
-                      <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{hpdMatches.length}</div>
-                      <div className="text-[10px] text-gray-500 dark:text-gray-400">HPD Violations</div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
-                      <div className={`text-lg font-bold ${hpdOpen.length > 0 ? "text-red-600" : "text-gray-900 dark:text-gray-100"}`}>{hpdOpen.length}</div>
-                      <div className="text-[10px] text-gray-500 dark:text-gray-400">Open HPD</div>
-                    </div>
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {hpdMatches.length > 0 && (
+                      <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
+                        <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{hpdMatches.length}</div>
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400">HPD Violations</div>
+                      </div>
+                    )}
+                    {hpdOpen.length > 0 && (
+                      <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
+                        <div className="text-lg font-bold text-red-600">{hpdOpen.length}</div>
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Open HPD</div>
+                      </div>
+                    )}
                     {hpdClassC.length > 0 && (
                       <div className="bg-red-50 dark:bg-red-900/10 rounded-lg px-3 py-2">
                         <div className="text-lg font-bold text-red-600">{hpdClassC.length}</div>
                         <div className="text-[10px] text-red-500">Class C (Hazardous)</div>
                       </div>
                     )}
-                    <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
-                      <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{ecbMatches.length}</div>
-                      <div className="text-[10px] text-gray-500 dark:text-gray-400">ECB Violations</div>
-                    </div>
+                    {ecbMatches.length > 0 && (
+                      <div className="bg-gray-50 dark:bg-[#0f1117] rounded-lg px-3 py-2">
+                        <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{ecbMatches.length}</div>
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400">ECB Violations</div>
+                      </div>
+                    )}
                   </div>
                   {/* Hazard callouts with violation references */}
                   {sortedTags.length > 0 && (
@@ -460,8 +466,8 @@ function BuildingPage() {
                     <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Apartment-specific info available for:</div>
                   </div>
                   {apt && (
-                    <button onClick={() => { router.push(`/building/${bin}`); setAptDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-xs text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 font-medium">
-                      ← View full building
+                    <button onClick={() => { router.push(`/building/${bin}`); setAptDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 font-medium">
+                      ✕ Clear apartment filter
                     </button>
                   )}
                   {availableApts.map(a => (
@@ -1361,6 +1367,54 @@ function BuildingPage() {
               </div>
             ) }] : []),
           ]}
+          preFooter={(() => {
+            const refs = drawerItem.cross_references;
+            if (!refs || (!refs.jobs?.length && !refs.ecb_refs?.length && !refs.co_refs?.length)) return null;
+            return (
+              <div className="px-4 md:px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Connected Records</div>
+                <div className="space-y-2">
+                  {refs.jobs?.length > 0 && (
+                    <div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Job Numbers</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {refs.jobs.map((j: string) => (
+                          <a key={j} href={`https://a810-bisweb.nyc.gov/bisweb/JobsQueryByNumberServlet?passession=&pasession=&tracker=&requestid=&allbin=&alession=&passession=&allisession=&passession=&allisn=${j}`} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors cursor-pointer">
+                            📋 Job #{j} ↗
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {refs.ecb_refs?.length > 0 && (
+                    <div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Related ECB Violations</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {refs.ecb_refs.map((r: string) => (
+                          <span key={r} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+                            ⚠️ ECB #{r}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {refs.co_refs?.length > 0 && (
+                    <div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Certificate of Occupancy</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {refs.co_refs.map((c: string) => (
+                          <span key={c} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
+                            📄 CO #{c}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         />
       )}
       {drawerType === "permit" && drawerItem && (

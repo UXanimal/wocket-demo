@@ -22,9 +22,10 @@ interface DetailDrawerProps {
   externalLabel?: string;
   source?: string;
   fields: { label: string; value: any; full?: boolean }[];
+  preFooter?: React.ReactNode;
 }
 
-export default function DetailDrawer({ open, onClose, onPrev, onNext, title, subtitle, externalUrl, externalLabel, source, fields }: DetailDrawerProps) {
+export default function DetailDrawer({ open, onClose, onPrev, onNext, title, subtitle, externalUrl, externalLabel, source, fields, preFooter }: DetailDrawerProps) {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
     if (e.key === "ArrowUp" && onPrev) { e.preventDefault(); onPrev(); }
@@ -75,6 +76,7 @@ export default function DetailDrawer({ open, onClose, onPrev, onNext, title, sub
             </div>
           ))}
         </div>
+        {preFooter}
         <div className="px-4 md:px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3 flex-wrap">
           {externalUrl && (
             <a href={externalUrl} target="_blank" rel="noopener noreferrer"

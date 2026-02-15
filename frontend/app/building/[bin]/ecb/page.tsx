@@ -170,6 +170,55 @@ function EcbPageInner() {
             </div>
           ) }] : []),
         ] : []}
+          preFooter={(() => {
+            if (!selected) return null;
+            const refs = selected.cross_references;
+            if (!refs || (!refs.jobs?.length && !refs.ecb_refs?.length && !refs.co_refs?.length)) return null;
+            return (
+              <div className="px-4 md:px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Connected Records</div>
+                <div className="space-y-2">
+                  {refs.jobs?.length > 0 && (
+                    <div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Job Numbers</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {refs.jobs.map((j: string) => (
+                          <a key={j} href={`https://a810-bisweb.nyc.gov/bisweb/JobsQueryByNumberServlet?passession=&pasession=&tracker=&requestid=&allbin=&alession=&passession=&allisession=&passession=&allisn=${j}`} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors cursor-pointer">
+                            📋 Job #{j} ↗
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {refs.ecb_refs?.length > 0 && (
+                    <div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Related ECB Violations</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {refs.ecb_refs.map((r: string) => (
+                          <span key={r} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+                            ⚠️ ECB #{r}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {refs.co_refs?.length > 0 && (
+                    <div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Certificate of Occupancy</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {refs.co_refs.map((c: string) => (
+                          <span key={c} className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
+                            📄 CO #{c}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
       />
     </>
   );

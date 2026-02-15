@@ -142,6 +142,25 @@ def tag_ecb_violation(desc: str) -> list:
     return tags
 
 
+def extract_cross_references(desc: str) -> dict:
+    """Extract job numbers, ECB violation references, and CO numbers from ECB description."""
+    if not desc:
+        return {"jobs": [], "ecb_refs": [], "co_refs": []}
+    
+    desc_upper = desc.upper()
+    
+    # Job numbers: JOB #M00878280, JOB# M01032270, JOBS #M00966449
+    jobs = list(set(re.findall(r'(?:JOB\s*#?\s*|JOBS\s*#?\s*)([A-Z]?\d{6,})', desc_upper)))
+    
+    # ECB violation refs: NOV #35450475J, VIOLATION #35258095H, ECB VIOLATION #39005951L
+    ecb_refs = list(set(re.findall(r'(?:NOV|VIOLATION|ECB\s*VIOLATION)\s*#?\s*(\d{8,}[A-Z])', desc_upper)))
+    
+    # CO refs: C OF O #120015401, CERTIFICATE OF OCCUPANCY #120015401, COFO #1033361
+    co_refs = list(set(re.findall(r'(?:C(?:ERTIFICATE)?\s*(?:OF\s*)?O(?:CCUPANCY)?|COFO|TCOFO)\s*#?\s*(\d{6,})', desc_upper)))
+    
+    return {"jobs": jobs, "ecb_refs": ecb_refs, "co_refs": co_refs}
+
+
 # ─── Address Normalization ─────────────────────────────────
 
 def normalize_address_query(q: str) -> str:
@@ -351,6 +370,7 @@ def get_building(bin_number: str, apt: Optional[str] = None):
         desc = v.get('violation_description') or ''
         v['extracted_apartments'] = extract_apartments_from_description(desc)
         v['tags'] = tag_ecb_violation(desc)
+        v['cross_references'] = extract_cross_references(desc)
 
     # Annotate ECB if apt filter
     if apt:
@@ -1605,6 +1625,7 @@ def get_all_ecb(
     for v in rows:
         desc = v.get('violation_description') or ''
         v['tags'] = tag_ecb_violation(desc)
+        v['cross_references'] = extract_cross_references(desc)
         v['extracted_apartments'] = extract_apartments_from_description(desc)
         if apt:
             v['is_unit_match'] = apt.upper() in desc.upper()
@@ -1612,6 +1633,28 @@ def get_all_ecb(
     cur.close()
     conn.close()
     return {"rows": rows, "total": total, "page": page, "per_page": per_page}
+
+
+@app.get("/api/building/{bin_number}/ecb/references/{ref_id}")
+def get_ecb_references(bin_number: str, ref_id: str):
+    """Find all ECB violations that reference a given job, violation, or CO number."""
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT ecb_violation_number, issue_date, violation_description, 
+            ecb_violation_status, severity, penality_imposed
+        FROM ecb_violations 
+        WHERE bin = %s AND UPPER(violation_description) LIKE %s
+        ORDER BY issue_date DESC
+    """, [bin_number, f"%{ref_id.upper()}%"])
+    rows = cur.fetchall()
+    for v in rows:
+        desc = v.get('violation_description') or ''
+        v['tags'] = tag_ecb_violation(desc)
+        v['cross_references'] = extract_cross_references(desc)
+    cur.close()
+    conn.close()
+    return {"rows": rows, "ref_id": ref_id}
 
 
 # ─── Complaints ───────────────────────────────────────────
