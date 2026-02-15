@@ -137,7 +137,7 @@ def tag_ecb_violation(desc: str) -> list:
     desc_lower = desc.lower()
     tags = []
     for tag_id, defn in ECB_TAG_DEFINITIONS.items():
-        if any(kw in desc_lower for kw in defn["keywords"]):
+        if any(re.search(r'\b' + re.escape(kw) + r'\b', desc_lower) for kw in defn["keywords"]):
             tags.append({"id": tag_id, "icon": defn["icon"], "label": defn["label"]})
     return tags
 
