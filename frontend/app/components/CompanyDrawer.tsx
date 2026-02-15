@@ -207,12 +207,18 @@ export default function CompanyDrawer({ open, onClose, companyName, currentBin }
             <div className="space-y-2">
               {data.buildings.map((b: any, i: number) => (
                 <a key={i} href={`/building/${b.bin}`} className={`block border rounded-lg px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${currentBin && b.bin === currentBin ? "border-blue-400 bg-blue-50/50 dark:bg-blue-900/10" : "border-gray-200 dark:border-gray-700"}`}>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-start">
                     <div>
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{b.address || b.bin}</div>
                       <div className="text-gray-400">{b.borough}</div>
+                      {(b.corporate_owner || b.individual_owner) && (
+                        <div className="mt-1 text-gray-500 dark:text-gray-400">
+                          {b.corporate_owner && <div>{b.corporate_owner}</div>}
+                          {b.individual_owner && <div className="text-gray-400">{b.individual_owner}</div>}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       {b.open_class_c > 0 && <span className="text-red-600 font-medium">{b.open_class_c} Class C</span>}
                       {b.score_grade && <span className={`px-2 py-0.5 rounded font-bold ${b.score_grade === "F" ? "bg-red-100 text-red-700" : b.score_grade === "D" ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-700"}`}>{b.score_grade}</span>}
                     </div>

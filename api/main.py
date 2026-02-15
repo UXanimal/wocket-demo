@@ -2750,11 +2750,17 @@ def get_company_profile(company_name: str):
     
     # Building list with grades
     cur.execute("""
-        SELECT bin, address, borough, score_grade, 
-            total_hpd_violations, open_class_c
-        FROM building_scores 
-        WHERE bin = ANY(%s)
-        ORDER BY address
+        SELECT bs.bin, bs.address, bs.borough, bs.score_grade, 
+            bs.total_hpd_violations, bs.open_class_c, bs.owner_name,
+            (SELECT c.corporationname FROM hpd_contacts c 
+             JOIN hpd_registrations r ON c.registrationid = r.registrationid
+             WHERE r.bin = bs.bin AND c.type = 'CorporateOwner' LIMIT 1) as corporate_owner,
+            (SELECT c.firstname || ' ' || c.lastname FROM hpd_contacts c 
+             JOIN hpd_registrations r ON c.registrationid = r.registrationid
+             WHERE r.bin = bs.bin AND c.type = 'IndividualOwner' LIMIT 1) as individual_owner
+        FROM building_scores bs
+        WHERE bs.bin = ANY(%s)
+        ORDER BY bs.address
     """, [all_buildings])
     buildings = cur.fetchall()
     
