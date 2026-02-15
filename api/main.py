@@ -354,6 +354,10 @@ def get_building(bin_number: str, apt: Optional[str] = None):
         # Sort: unit matches first, then floor matches, then rest
         open_violations.sort(key=lambda v: (0 if v['is_unit_match'] else 1 if v['is_floor_match'] else 2))
     
+    # Tag HPD violations
+    for v in open_violations:
+        v['tags'] = tag_ecb_violation(v.get('novdescription') or '')
+
     # ECB violations
     cur.execute("""
         SELECT ecb_violation_number, issue_date, violation_description,
@@ -1565,6 +1569,10 @@ def get_all_violations(
             v['is_unit_match'] = (v_apt == apt_upper) or bool(apt_pat.search(v_desc))
             v_story = str(v.get('story') or '').strip()
             v['is_floor_match'] = bool(apt_floor and v_story == apt_floor and not v['is_unit_match'])
+
+    # Tag HPD violations
+    for v in rows:
+        v['tags'] = tag_ecb_violation(v.get('novdescription') or '')
 
     cur.close()
     conn.close()

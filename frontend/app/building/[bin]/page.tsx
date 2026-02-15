@@ -363,14 +363,9 @@ function BuildingPage() {
         return (
           <>
             <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
-              <div className="max-w-5xl mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-lg">Apt {apt}</span>
-                  <span className="text-blue-700 dark:text-blue-300 text-sm">Apartment-specific violations are highlighted below</span>
-                </div>
-                <button onClick={() => router.push(`/building/${bin}`)} className="text-blue-400 hover:text-blue-600 text-lg font-bold leading-none" title="View full building">
-                  ×
-                </button>
+              <div className="max-w-5xl mx-auto px-3 md:px-4 py-3 flex items-center gap-3">
+                <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-lg">Apt {apt}</span>
+                <span className="text-blue-700 dark:text-blue-300 text-sm">Apartment-specific violations are highlighted below</span>
               </div>
             </div>
             {/* Apartment Summary */}
@@ -445,18 +440,13 @@ function BuildingPage() {
           </Link>
         )}
 
-        {/* Address title + grade */}
-        <div className="flex flex-wrap items-center gap-3 mb-1">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">
-            {addrParam && addrParam !== b.address ? addrParam : b.address}
-          </h1>
-          <span className={`text-sm sm:text-base md:text-lg font-bold w-[26px] sm:w-[28px] md:w-[30px] aspect-square inline-flex items-center justify-center leading-none rounded-lg -translate-y-[4px] ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
-          {/* Apartment dropdown */}
-          {availableApts.length > 0 && (
-            <div className="relative -translate-y-[4px]" ref={aptDropdownRef}>
+        {/* Apartment selector */}
+        {availableApts.length > 0 && (
+          <div className="flex items-center gap-2 mb-2" ref={aptDropdownRef}>
+            <div className="relative">
               <button
                 onClick={() => setAptDropdownOpen(!aptDropdownOpen)}
-                className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 ${apt ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-[#1a1b2e] text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400"}`}
+                className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 ${apt ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400"}`}
               >
                 🏠 {apt ? `Apt ${apt}` : "Apartments"} <span className="text-[10px]">{aptDropdownOpen ? "▲" : "▼"}</span>
               </button>
@@ -483,7 +473,19 @@ function BuildingPage() {
                 </div>
               )}
             </div>
-          )}
+            {apt && (
+              <button onClick={() => router.push(`/building/${bin}`)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg font-bold leading-none" title="Clear apartment filter">
+                ×
+              </button>
+            )}
+          </div>
+        )}
+        {/* Address title + grade */}
+        <div className="flex flex-wrap items-center gap-3 mb-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">
+            {addrParam && addrParam !== b.address ? addrParam : b.address}
+          </h1>
+          <span className={`text-sm sm:text-base md:text-lg font-bold w-[26px] sm:w-[28px] md:w-[30px] aspect-square inline-flex items-center justify-center leading-none rounded-lg -translate-y-[4px] ${gradeColor(b.score_grade)}`}>{b.score_grade || "?"}</span>
           <Link
             href={`/building/${bin}/report${qsStr}`}
             className="hidden sm:flex ml-auto text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors items-center gap-1.5 leading-none -translate-y-[4px]"
@@ -774,7 +776,7 @@ function BuildingPage() {
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b">
-                  <th className="pb-2 pr-2">ID</th><th className="pb-2 pr-2">Class</th><th className="pb-2 pr-2">Date</th><th className="pb-2 pr-2">Open</th><th className="pb-2 pr-2">Status</th><th className="pb-2">Description</th>
+                  <th className="pb-2 pr-2">ID</th><th className="pb-2 pr-2">Class</th><th className="pb-2 pr-2">Date</th><th className="pb-2 pr-2">Open</th><th className="pb-2 pr-2 w-16">Status</th><th className="pb-2">Description</th>
                 </tr></thead>
                 <tbody>
                   {openViolations.slice(0, 10).map((v, i) => {
@@ -785,10 +787,17 @@ function BuildingPage() {
                       <td className="py-2 pr-2"><span className={`px-1.5 py-0.5 rounded text-xs font-medium ${v.class === "C" ? "bg-red-100 text-red-700" : v.class === "B" ? "bg-orange-100 text-orange-700" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"}`}>{v.class}</span></td>
                       <td className="py-2 pr-2 text-xs">{formatDate(v.inspectiondate)}</td>
                       <td className={`py-2 pr-2 text-xs ${daysColor(days)}`}>{formatDays(days)}</td>
-                      <td className="py-2 pr-2 text-xs">{v.currentstatus}</td>
-                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs relative overflow-visible">
+                      <td className="py-2 pr-2 text-xs max-w-[64px] truncate">{v.currentstatus}</td>
+                      <td className="py-2 text-xs text-gray-600 dark:text-gray-300 max-w-[40%] relative">
                         <span className="block truncate">{v.novdescription}</span>
-                        {(v.is_unit_match || v.is_floor_match) && <span className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm ${v.is_unit_match ? "bg-blue-600" : "bg-blue-400"}`}>Apt {v.apartment || apt}</span>}
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {(v.tags || []).map((t: any) => (
+                            <span key={t.id} className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{t.icon} {t.label}</span>
+                          ))}
+                          {v.apartment && (
+                            <span className={`inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border ${apt && v.apartment?.toUpperCase().includes(apt.toUpperCase()) ? "bg-blue-600 text-white border-blue-600" : "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"}`}>🏠 {v.apartment}</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                     );
@@ -846,7 +855,7 @@ function BuildingPage() {
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b">
-                  <th className="pb-2 pr-2">Severity</th><th className="pb-2 pr-2">Issue Date</th><th className="pb-2 pr-2">Status</th><th className="pb-2 pr-2">Type</th><th className="pb-2">Penalty</th>
+                  <th className="pb-2 pr-2">Severity</th><th className="pb-2 pr-2">Issue Date</th><th className="pb-2 pr-2">Status</th><th className="pb-2 pr-2">Description</th><th className="pb-2">Penalty</th>
                 </tr></thead>
                 <tbody>
                   {ecb.slice(0, 10).map((v, i) => (
@@ -855,16 +864,15 @@ function BuildingPage() {
                       <td className="py-2 pr-2 text-xs">{formatDate(v.issue_date)}</td>
                       <td className="py-2 pr-2 text-xs">{v.ecb_violation_status}</td>
                       <td className="py-2 pr-2 text-xs text-gray-600 dark:text-gray-300 max-w-xs relative">
-                        <span className="truncate block pr-14">{v.violation_description}</span>
+                        <span className="truncate block">{v.violation_description}</span>
                         <div className="flex flex-wrap gap-1 mt-0.5">
                           {(v.tags || []).map((t: any) => (
                             <span key={t.id} className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{t.icon} {t.label}</span>
                           ))}
-                          {!apt && (v.extracted_apartments || []).length > 0 && (
-                            <span className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">🏠 {(v.extracted_apartments || []).join(", ")}</span>
-                          )}
+                          {(v.extracted_apartments || []).map((a: string) => (
+                            <span key={a} className={`inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border ${apt && a.toUpperCase() === apt.toUpperCase() ? "bg-blue-600 text-white border-blue-600" : "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"}`}>🏠 {a}</span>
+                          ))}
                         </div>
-                        {v.is_unit_match && <span className="absolute right-1 top-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Apt {apt}</span>}
                       </td>
                       <td className="py-2 text-xs">{fmt$(v.penality_imposed)}</td>
                     </tr>
@@ -1322,6 +1330,18 @@ function BuildingPage() {
             { label: "Violation Status", value: drawerItem.violationstatus },
             { label: "Current Status", value: drawerItem.currentstatus },
             { label: "Description", value: drawerItem.novdescription, full: true },
+            ...(drawerItem.tags && drawerItem.tags.length > 0 ? [{ label: "Hazard Tags", value: (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {drawerItem.tags.map((t: any, ti: number) => {
+                  const highSev = ["fire-stopping", "asbestos", "lead", "structural", "egress"].includes(t.id);
+                  return (
+                    <span key={ti} className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full border ${highSev ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"}`}>
+                      {t.icon} {t.label}
+                    </span>
+                  );
+                })}
+              </div>
+            ), full: true }] : []),
           ]}
         />
       )}
